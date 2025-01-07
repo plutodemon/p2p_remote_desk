@@ -1,0 +1,68 @@
+# 基本设置
+version = "0.1.0"
+environment = "development"  # development 或 production
+
+# 服务器设置
+[server]
+address = "127.0.0.1"
+port = "7777"
+
+# 屏幕设置
+[screen]
+default_quality = "high"
+default_frame_rate = 30
+frame_rates = [15, 30, 60]
+
+[[screen.quality]]
+name = "低"
+scale = 0.3
+compression = 50
+
+[[screen.quality]]
+name = "中"
+scale = 0.6
+compression = 70
+
+[[screen.quality]]
+name = "高"
+scale = 1.0
+compression = 95
+
+# UI设置
+[ui]
+theme = "dark"
+language = "zh-CN"
+hide_toolbar_in_fullscreen = true
+show_performance_stats = true
+
+[ui.development]
+show_toolbar = true
+show_fps = true
+show_status = true
+show_remote_screen = true
+allow_mode_switch = true
+
+[ui.production]
+show_toolbar = true
+show_fps = false
+show_status = true
+show_remote_screen = true
+allow_mode_switch = false
+
+# 性能设置
+[performance]
+max_goroutines = 1000
+frame_buffer_size = 10
+skip_identical_frames = true
+
+# 日志设置
+[log]
+console = true
+file = true
+file_path = "logs"
+max_size = 50
+max_backups = 30
+max_age = 7
+compress = true
+localTime = true
+format = "rd_%s.log"
