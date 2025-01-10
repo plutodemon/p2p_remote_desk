@@ -190,6 +190,22 @@ func Error(format string, v ...interface{}) {
 
 // formatMessage 格式化消息
 func formatMessage(format string, v ...interface{}) string {
+	if len(v) == 0 {
+		return format
+	}
+
+	// 检查是否包含格式化占位符
+	if !strings.Contains(format, "%") {
+		// 如果没有格式化占位符，直接拼接参数
+		parts := make([]string, len(v)+1)
+		parts[0] = format
+		for i, val := range v {
+			parts[i+1] = fmt.Sprint(val)
+		}
+		return strings.Join(parts, " ")
+	}
+
+	// 处理错误类型
 	if len(v) == 1 {
 		if err, ok := v[0].(error); ok {
 			return formatError(err)

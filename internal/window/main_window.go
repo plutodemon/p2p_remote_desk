@@ -1,13 +1,14 @@
-package ui
+package window
 
 import (
 	"fyne.io/fyne/v2"
+	"p2p_remote_desk/internal/ui"
 )
 
 // MainWindow 主窗口管理器
 type MainWindow struct {
 	window fyne.Window
-	mainUI *MainUI
+	mainUI *ui.MainUI
 }
 
 // NewMainWindow 创建主窗口管理器
@@ -17,7 +18,7 @@ func NewMainWindow(window fyne.Window) *MainWindow {
 	}
 
 	// 创建主UI
-	w.mainUI = NewMainUI(window)
+	w.mainUI = ui.NewMainUI(window)
 	window.SetContent(w.mainUI.Container)
 
 	// 设置窗口关闭回调
