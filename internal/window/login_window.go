@@ -71,7 +71,7 @@ func (w *LoginWindow) setupUI() {
 	// 设置窗口内容
 	content := container.NewCenter(form)
 	w.window.SetContent(content)
-	w.window.Resize(fyne.NewSize(1024, 768))
+	w.window.Resize(config.WindowSize)
 	w.window.CenterOnScreen()
 	w.window.SetMaster()
 }

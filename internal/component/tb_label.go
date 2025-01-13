@@ -3,6 +3,7 @@ package component
 import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/widget"
+	"p2p_remote_desk/config"
 )
 
 type CustomLabelToolbarItem struct {
@@ -12,7 +13,7 @@ type CustomLabelToolbarItem struct {
 
 func NewCustomLabelToolbarItem(text string) *CustomLabelToolbarItem {
 	Label := widget.NewLabel(text)
-	Label.Resize(fyne.NewSize(5, 10))
+	Label.Resize(config.ToolbarItemSize)
 
 	item := &CustomLabelToolbarItem{Label: Label}
 	return item

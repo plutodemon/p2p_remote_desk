@@ -4,6 +4,7 @@ import (
 	"p2p_remote_desk/config"
 	"p2p_remote_desk/logger"
 	"strconv"
+	"time"
 )
 
 func (ui *MainUI) onConnectClick() {
@@ -53,19 +54,19 @@ func (ui *MainUI) onFullScreenClick() {
 	if ui.toolbar.isFullScreen {
 		// 退出全屏
 		ui.Window.SetFullScreen(false)
-		ui.toolbar.FullScreenBtn.Button.SetText("全屏")
+		ui.toolbar.FullScreenBtn.Button.SetText(config.FullScreen)
 
 		// 退出全屏时总是显示工具栏
 		ui.toolbar.Toolbar.Show()
 
 		// 性能监控
 		ui.perfStats.Hide()
-		ui.toolbar.PerfStatsBtn.Button.SetText("性能监控")
+		ui.toolbar.PerfStatsBtn.Button.SetText(config.ShowPerfStats)
 		ui.toolbar.isShowStats = false
 	} else {
 		// 进入全屏
 		ui.Window.SetFullScreen(true)
-		ui.toolbar.FullScreenBtn.Button.SetText("退出全屏")
+		ui.toolbar.FullScreenBtn.Button.SetText(config.ExitFullScreen)
 
 		// 根据配置决定是否隐藏工具栏
 		if cfg.UIConfig.HideToolbarInFullscreen {
@@ -75,7 +76,7 @@ func (ui *MainUI) onFullScreenClick() {
 
 	// 性能监控
 	ui.perfStats.Hide()
-	ui.toolbar.PerfStatsBtn.Button.SetText("性能监控")
+	ui.toolbar.PerfStatsBtn.Button.SetText(config.ShowPerfStats)
 	ui.toolbar.isShowStats = false
 
 	ui.toolbar.isFullScreen = !ui.toolbar.isFullScreen
@@ -88,10 +89,10 @@ func (ui *MainUI) onDisplayChanged(s string) {
 func (ui *MainUI) togglePerformanceStats() {
 	if ui.toolbar.isShowStats {
 		ui.perfStats.Hide()
-		ui.toolbar.PerfStatsBtn.Button.SetText("性能监控")
+		ui.toolbar.PerfStatsBtn.Button.SetText(config.ShowPerfStats)
 	} else {
 		ui.perfStats.Show()
-		ui.toolbar.PerfStatsBtn.Button.SetText("隐藏监控")
+		ui.toolbar.PerfStatsBtn.Button.SetText(config.HiddenPerfStats)
 	}
 	ui.toolbar.isShowStats = !ui.toolbar.isShowStats
 }
@@ -127,11 +128,65 @@ func (ui *MainUI) onFPSChanged(s string) {
 	}
 }
 
+func (ui *MainUI) StopCapture() {
+	if !ui.isCapturing {
+		return
+	}
+	ui.isCapturing = false
+	ui.lastImage = nil
+	ui.remoteScreen.Refresh()
+}
+
+func (ui *MainUI) StartCapture() {
+	if ui.isCapturing {
+		return
+	}
+
+	fps, _ := strconv.Atoi(ui.toolbar.FpsSelect.Select.Selected)
+	if fps <= 0 {
+		fps = 30
+	}
+
+	ui.isCapturing = true
+	interval := time.Second / time.Duration(fps)
+
+	ticker := time.NewTicker(interval)
+	lastCaptureTime := time.Now()
+
+	go func() {
+		defer ticker.Stop()
+
+		for range ticker.C {
+			if !ui.isCapturing {
+				return
+			}
+
+			// 更新FPS
+			now := time.Now()
+			actualFPS := 1.0 / now.Sub(lastCaptureTime).Seconds()
+			lastCaptureTime = now
+			ui.toolbar.SetFPS(actualFPS)
+
+			// 捕获并显示画面
+			if ui.screenCapture != nil {
+				img, err := ui.screenCapture.CaptureScreen()
+				if err != nil {
+					logger.Error("屏幕捕获失败: %v", err)
+					continue
+				}
+
+				ui.lastImage = img
+				ui.remoteScreen.Refresh()
+			}
+		}
+	}()
+}
+
 func (ui *MainUI) onModeChanged(_ float64) {
 	if ui.toolbar.isController {
-		ui.toolbar.ModeState.Label.SetText("被控端")
+		ui.toolbar.ModeState.Label.SetText(config.ControlledEnd)
 	} else {
-		ui.toolbar.ModeState.Label.SetText("控制端")
+		ui.toolbar.ModeState.Label.SetText(config.ControlEnd)
 	}
 
 	ui.toolbar.isController = !ui.toolbar.isController

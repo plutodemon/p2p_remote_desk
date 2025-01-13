@@ -3,6 +3,7 @@ package component
 import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/widget"
+	"p2p_remote_desk/config"
 )
 
 type CustomButtonToolbarItem struct {
@@ -13,7 +14,7 @@ type CustomButtonToolbarItem struct {
 
 func NewCustomButtonToolbarItem(name string, onActivated func()) *CustomButtonToolbarItem {
 	Button := widget.NewButton(name, onActivated)
-	Button.Resize(fyne.NewSize(5, 10))
+	Button.Resize(config.ToolbarItemSize)
 
 	item := &CustomButtonToolbarItem{Button: Button, OnActivated: onActivated}
 	return item

@@ -3,6 +3,7 @@ package internal
 import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
+	"p2p_remote_desk/config"
 	"p2p_remote_desk/internal/window"
 	"p2p_remote_desk/logger"
 )
@@ -39,7 +40,7 @@ func (a *App) Run() {
 func (a *App) showMainWindow() {
 	// 创建主窗口
 	mainWindow := a.FyneApp.NewWindow("远程桌面")
-	mainWindow.Resize(fyne.NewSize(1024, 768))
+	mainWindow.Resize(config.WindowSize)
 
 	// 创建主窗口管理器
 	a.MainWindow = window.NewMainWindow(mainWindow)

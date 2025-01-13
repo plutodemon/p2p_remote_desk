@@ -6,8 +6,6 @@ import (
 	"fyne.io/fyne/v2/container"
 	"image"
 	"p2p_remote_desk/internal/capture"
-	"p2p_remote_desk/logger"
-	"strconv"
 	"time"
 )
 
@@ -39,6 +37,8 @@ func NewMainUI(window fyne.Window) *MainUI {
 	ui.initComponents()
 	ui.setupLayout()
 	ui.setupKeyboardHandling()
+
+	ui.perfStats.Hide()
 
 	return ui
 }
@@ -89,60 +89,6 @@ func (ui *MainUI) updateScreen(w, h int) image.Image {
 		return img
 	}
 	return ui.lastImage
-}
-
-func (ui *MainUI) StartCapture() {
-	if ui.isCapturing {
-		return
-	}
-
-	fps, _ := strconv.Atoi(ui.toolbar.FpsSelect.Select.Selected)
-	if fps <= 0 {
-		fps = 30
-	}
-
-	ui.isCapturing = true
-	interval := time.Second / time.Duration(fps)
-
-	ticker := time.NewTicker(interval)
-	lastCaptureTime := time.Now()
-
-	go func() {
-		defer ticker.Stop()
-
-		for range ticker.C {
-			if !ui.isCapturing {
-				return
-			}
-
-			// 更新FPS
-			now := time.Now()
-			actualFPS := 1.0 / now.Sub(lastCaptureTime).Seconds()
-			lastCaptureTime = now
-			ui.toolbar.SetFPS(actualFPS)
-
-			// 捕获并显示画面
-			if ui.screenCapture != nil {
-				img, err := ui.screenCapture.CaptureScreen()
-				if err != nil {
-					logger.Error("屏幕捕获失败: %v", err)
-					continue
-				}
-
-				ui.lastImage = img
-				ui.remoteScreen.Refresh()
-			}
-		}
-	}()
-}
-
-func (ui *MainUI) StopCapture() {
-	if !ui.isCapturing {
-		return
-	}
-	ui.isCapturing = false
-	ui.lastImage = nil
-	ui.remoteScreen.Refresh()
 }
 
 // Cleanup 清理资源

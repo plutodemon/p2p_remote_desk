@@ -3,6 +3,7 @@ package component
 import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/widget"
+	"p2p_remote_desk/config"
 )
 
 type CustomRadioToolbarItem struct {
@@ -13,7 +14,7 @@ type CustomRadioToolbarItem struct {
 
 func NewCustomRadioToolbarItem(options []string, changed func(string)) *CustomRadioToolbarItem {
 	Radio := widget.NewRadioGroup(options, changed)
-	Radio.Resize(fyne.NewSize(5, 10))
+	Radio.Resize(config.ToolbarItemSize)
 
 	item := &CustomRadioToolbarItem{Radio: Radio, OnActivated: changed}
 	return item

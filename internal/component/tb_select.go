@@ -3,6 +3,7 @@ package component
 import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/widget"
+	"p2p_remote_desk/config"
 )
 
 type CustomSelectToolbarItem struct {
@@ -13,7 +14,7 @@ type CustomSelectToolbarItem struct {
 
 func NewCustomSelectToolbarItem(options []string, changed func(string)) *CustomSelectToolbarItem {
 	Select := widget.NewSelect(options, changed)
-	Select.Resize(fyne.NewSize(5, 10))
+	Select.Resize(config.ToolbarItemSize)
 	Select.Selected = options[0]
 	item := &CustomSelectToolbarItem{Select: Select, OnActivated: changed}
 	return item

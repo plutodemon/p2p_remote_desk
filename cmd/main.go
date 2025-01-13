@@ -10,9 +10,12 @@ import (
 )
 
 func main() {
+	// 设置全局panic处理
+	defer logger.HandlePanic()
+
 	// 初始化配置
 	if err := config.Init(); err != nil {
-		fmt.Printf("初始化配置失败: %v", err)
+		fmt.Printf("初始化配置失败: %v\n", err)
 		os.Exit(1)
 	}
 
@@ -22,14 +25,6 @@ func main() {
 		os.Exit(1)
 	}
 	defer logger.Cleanup()
-
-	// 添加panic恢复
-	defer func() {
-		if r := recover(); r != nil {
-			logger.Error("程序发生panic: %v", r)
-			os.Exit(1)
-		}
-	}()
 
 	if err := glfw.Init(); err != nil {
 		logger.Error("初始化glfw失败: %v", err)

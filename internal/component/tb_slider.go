@@ -14,7 +14,7 @@ type CustomSliderToolbarItem struct {
 
 func NewCustomSliderToolbarItem(onActivated func(float64)) *CustomSliderToolbarItem {
 	slider := widget.NewSlider(config.SliderClose, config.SliderOpen)
-	slider.Resize(fyne.NewSize(5, 10))
+	slider.Resize(config.ToolbarItemSize)
 	slider.Step = config.SliderStep
 	slider.Value = config.SliderClose
 

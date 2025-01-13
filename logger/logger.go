@@ -8,6 +8,7 @@ import (
 	"os"
 	"p2p_remote_desk/config"
 	"path/filepath"
+	"runtime/debug"
 	"strings"
 	"time"
 )
@@ -218,6 +219,19 @@ func formatMessage(format string, v ...interface{}) string {
 	return fmt.Sprintf(format, v...)
 }
 
+// Sync 确保日志写入磁盘
+func Sync() {
+	if !initialized || log == nil {
+		return
+	}
+
+	// 强制同步日志到磁盘
+	_ = log.Sync()
+	if sugar != nil {
+		_ = sugar.Sync()
+	}
+}
+
 // Cleanup 清理日志资源
 func Cleanup() {
 	if !initialized {
@@ -225,8 +239,28 @@ func Cleanup() {
 	}
 
 	if log != nil {
-		_ = log.Sync()
+		Sync() // 在清理前确保日志写入
 	}
 
 	initialized = false
+}
+
+func HandlePanic() {
+	if r := recover(); r != nil {
+		// 获取详细的堆栈信息
+		stack := debug.Stack()
+
+		// 确保错误信息写入日志
+		errorMsg := fmt.Sprintf("程序发生严重错误: %v\n堆栈信息:\n%s", r, stack)
+		Error(errorMsg)
+
+		// 确保日志写入磁盘
+		Sync()
+
+		// 打印错误信息到控制台
+		fmt.Println(errorMsg)
+
+		// 退出程序
+		os.Exit(1)
+	}
 }

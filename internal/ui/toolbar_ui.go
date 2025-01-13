@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/widget"
 	"github.com/go-gl/glfw/v3.3/glfw"
 	"p2p_remote_desk/config"
@@ -54,7 +53,7 @@ func (ui *MainUI) NewToolbar() {
 
 	ui.initToolBarUI()
 
-	ui.toolbar.Toolbar.Resize(fyne.NewSize(20, 5))
+	ui.toolbar.Toolbar.Resize(config.ToolbarSize)
 
 	ui.toolbar.Toolbar.Append(ui.toolbar.ModeSelect)
 	ui.toolbar.Toolbar.Append(ui.toolbar.ModeState)
@@ -70,7 +69,9 @@ func (ui *MainUI) NewToolbar() {
 
 	ui.toolbar.Toolbar.Append(ui.toolbar.QualitySelect)
 	ui.toolbar.Toolbar.Append(ui.toolbar.FpsSelect)
-	ui.toolbar.Toolbar.Append(ui.toolbar.DisplaySelect)
+	if ui.toolbar.createDisplay {
+		ui.toolbar.Toolbar.Append(ui.toolbar.DisplaySelect)
+	}
 	ui.toolbar.Toolbar.Append(widget.NewToolbarSpacer())
 
 	ui.toolbar.Toolbar.Append(ui.toolbar.FpsLabel)
@@ -82,7 +83,7 @@ func (ui *MainUI) initToolBarUI() {
 	ui.toolbar.StatusLabel = component.NewCustomLabelToolbarItem("就绪")
 	ui.toolbar.ConnectBtn = component.NewCustomButtonToolbarItem(config.ConnectBtnNameOpen, ui.onConnectClick)
 
-	ui.toolbar.FullScreenBtn = component.NewCustomButtonToolbarItem("全屏", ui.onFullScreenClick)
+	ui.toolbar.FullScreenBtn = component.NewCustomButtonToolbarItem(config.FullScreen, ui.onFullScreenClick)
 
 	disPlayList := make([]string, 0)
 	switch runtime.GOOS {
@@ -100,11 +101,13 @@ func (ui *MainUI) initToolBarUI() {
 	}
 	if ui.toolbar.createDisplay {
 		ui.toolbar.DisplaySelect = component.NewCustomRadioToolbarItem(disPlayList, ui.onDisplayChanged)
-		ui.toolbar.DisplaySelect.Radio.Selected = disPlayList[0]
+		ui.toolbar.DisplaySelect.Radio.Horizontal = true
+		ui.toolbar.DisplaySelect.Radio.Required = true
+		ui.toolbar.DisplaySelect.Radio.SetSelected(disPlayList[0])
 	}
 
 	// 创建性能监控按钮
-	ui.toolbar.PerfStatsBtn = component.NewCustomButtonToolbarItem("隐藏监控", ui.togglePerformanceStats)
+	ui.toolbar.PerfStatsBtn = component.NewCustomButtonToolbarItem(config.ShowPerfStats, ui.togglePerformanceStats)
 
 	// 创建质量选择
 	screenConfig := config.GetConfig().ScreenConfig
@@ -123,7 +126,7 @@ func (ui *MainUI) initToolBarUI() {
 
 	// 创建模式选择
 	ui.toolbar.ModeSelect = component.NewCustomSliderToolbarItem(ui.onModeChanged)
-	ui.toolbar.ModeState = component.NewCustomLabelToolbarItem("被控端")
+	ui.toolbar.ModeState = component.NewCustomLabelToolbarItem(config.ControlledEnd)
 }
 
 func (t *ToolbarUI) SetStatus(status string) {
