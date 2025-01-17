@@ -1,8 +1,8 @@
 package ui
 
 import (
-	"p2p_remote_desk/config"
-	"p2p_remote_desk/logger"
+	config2 "p2p_remote_desk/client/config"
+	"p2p_remote_desk/client/logger"
 	"strconv"
 	"time"
 )
@@ -41,7 +41,7 @@ func (ui *MainUI) handleControllerConnect() {
 		//}
 
 		ui.toolbar.SetStatus("已连接")
-		ui.toolbar.ConnectBtn.Button.SetText(config.ConnectBtnNameClose)
+		ui.toolbar.ConnectBtn.Button.SetText(config2.ConnectBtnNameClose)
 		ui.toolbar.ConnectBtn.Button.Enable()
 		ui.toolbar.isConnected = true
 		// ui.StartCapture()
@@ -49,24 +49,24 @@ func (ui *MainUI) handleControllerConnect() {
 }
 
 func (ui *MainUI) onFullScreenClick() {
-	cfg := config.GetConfig()
+	cfg := config2.GetConfig()
 
 	if ui.toolbar.isFullScreen {
 		// 退出全屏
 		ui.Window.SetFullScreen(false)
-		ui.toolbar.FullScreenBtn.Button.SetText(config.FullScreen)
+		ui.toolbar.FullScreenBtn.Button.SetText(config2.FullScreen)
 
 		// 退出全屏时总是显示工具栏
 		ui.toolbar.Toolbar.Show()
 
 		// 性能监控
 		ui.perfStats.Hide()
-		ui.toolbar.PerfStatsBtn.Button.SetText(config.ShowPerfStats)
+		ui.toolbar.PerfStatsBtn.Button.SetText(config2.ShowPerfStats)
 		ui.toolbar.isShowStats = false
 	} else {
 		// 进入全屏
 		ui.Window.SetFullScreen(true)
-		ui.toolbar.FullScreenBtn.Button.SetText(config.ExitFullScreen)
+		ui.toolbar.FullScreenBtn.Button.SetText(config2.ExitFullScreen)
 
 		// 根据配置决定是否隐藏工具栏
 		if cfg.UIConfig.HideToolbarInFullscreen {
@@ -76,7 +76,7 @@ func (ui *MainUI) onFullScreenClick() {
 
 	// 性能监控
 	ui.perfStats.Hide()
-	ui.toolbar.PerfStatsBtn.Button.SetText(config.ShowPerfStats)
+	ui.toolbar.PerfStatsBtn.Button.SetText(config2.ShowPerfStats)
 	ui.toolbar.isShowStats = false
 
 	ui.toolbar.isFullScreen = !ui.toolbar.isFullScreen
@@ -89,10 +89,10 @@ func (ui *MainUI) onDisplayChanged(s string) {
 func (ui *MainUI) togglePerformanceStats() {
 	if ui.toolbar.isShowStats {
 		ui.perfStats.Hide()
-		ui.toolbar.PerfStatsBtn.Button.SetText(config.ShowPerfStats)
+		ui.toolbar.PerfStatsBtn.Button.SetText(config2.ShowPerfStats)
 	} else {
 		ui.perfStats.Show()
-		ui.toolbar.PerfStatsBtn.Button.SetText(config.HiddenPerfStats)
+		ui.toolbar.PerfStatsBtn.Button.SetText(config2.HiddenPerfStats)
 	}
 	ui.toolbar.isShowStats = !ui.toolbar.isShowStats
 }
@@ -184,9 +184,9 @@ func (ui *MainUI) StartCapture() {
 
 func (ui *MainUI) onModeChanged(_ float64) {
 	if ui.toolbar.isController {
-		ui.toolbar.ModeState.Label.SetText(config.ControlledEnd)
+		ui.toolbar.ModeState.Label.SetText(config2.ControlledEnd)
 	} else {
-		ui.toolbar.ModeState.Label.SetText(config.ControlEnd)
+		ui.toolbar.ModeState.Label.SetText(config2.ControlEnd)
 	}
 
 	ui.toolbar.isController = !ui.toolbar.isController

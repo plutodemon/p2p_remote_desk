@@ -4,8 +4,8 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
-	"p2p_remote_desk/config"
-	"p2p_remote_desk/logger"
+	config2 "p2p_remote_desk/client/config"
+	"p2p_remote_desk/client/logger"
 	"time"
 )
 
@@ -56,7 +56,7 @@ func (w *LoginWindow) setupUI() {
 	)
 
 	// 如果是开发环境，添加离线登录按钮
-	if config.IsDevelopment() {
+	if config2.IsDevelopment() {
 		offlineBtn := widget.NewButton("离线登录", func() {
 			logger.Info("使用离线模式登录")
 			if w.onLoggedIn != nil {
@@ -71,7 +71,7 @@ func (w *LoginWindow) setupUI() {
 	// 设置窗口内容
 	content := container.NewCenter(form)
 	w.window.SetContent(content)
-	w.window.Resize(config.WindowSize)
+	w.window.Resize(config2.WindowSize)
 	w.window.CenterOnScreen()
 	w.window.SetMaster()
 }

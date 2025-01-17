@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/go-gl/glfw/v3.3/glfw"
 	"os"
-	"p2p_remote_desk/config"
-	"p2p_remote_desk/internal"
-	"p2p_remote_desk/logger"
+	"p2p_remote_desk/client/config"
+	"p2p_remote_desk/client/internal"
+	"p2p_remote_desk/client/logger"
 )
 
 func main() {

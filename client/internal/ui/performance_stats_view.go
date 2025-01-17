@@ -5,7 +5,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
-	"p2p_remote_desk/internal/monitor"
+	"p2p_remote_desk/client/internal/monitor"
 	"time"
 )
 

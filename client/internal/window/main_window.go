@@ -2,7 +2,7 @@ package window
 
 import (
 	"fyne.io/fyne/v2"
-	"p2p_remote_desk/internal/ui"
+	"p2p_remote_desk/client/internal/ui"
 )
 
 // MainWindow 主窗口管理器

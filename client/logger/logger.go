@@ -6,7 +6,7 @@ import (
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
 	"os"
-	"p2p_remote_desk/config"
+	"p2p_remote_desk/client/config"
 	"path/filepath"
 	"runtime/debug"
 	"strings"

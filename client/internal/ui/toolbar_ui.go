@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"fyne.io/fyne/v2/widget"
 	"github.com/go-gl/glfw/v3.3/glfw"
-	"p2p_remote_desk/config"
-	"p2p_remote_desk/internal/component"
-	"p2p_remote_desk/kit"
+	config2 "p2p_remote_desk/client/config"
+	component2 "p2p_remote_desk/client/internal/component"
+	"p2p_remote_desk/client/kit"
 	"runtime"
 )
 
@@ -15,30 +15,30 @@ type ToolbarUI struct {
 	Toolbar *widget.Toolbar
 
 	// 模式选择
-	ModeSelect   *component.CustomSliderToolbarItem
+	ModeSelect   *component2.CustomSliderToolbarItem
 	isController bool // 是否为控制端
-	ModeState    *component.CustomLabelToolbarItem
+	ModeState    *component2.CustomLabelToolbarItem
 
 	// 连接按钮
-	ConnectBtn  *component.CustomButtonToolbarItem
+	ConnectBtn  *component2.CustomButtonToolbarItem
 	isConnected bool // 是否已连接
-	StatusLabel *component.CustomLabelToolbarItem
+	StatusLabel *component2.CustomLabelToolbarItem
 
 	// 全屏按钮
-	FullScreenBtn *component.CustomButtonToolbarItem
+	FullScreenBtn *component2.CustomButtonToolbarItem
 	isFullScreen  bool // 是否全屏
 
 	// 监控按钮
-	PerfStatsBtn *component.CustomButtonToolbarItem
+	PerfStatsBtn *component2.CustomButtonToolbarItem
 	isShowStats  bool // 是否显示监控
 
 	// 显示选择
-	DisplaySelect *component.CustomRadioToolbarItem
-	QualitySelect *component.CustomSelectToolbarItem
-	FpsSelect     *component.CustomSelectToolbarItem
+	DisplaySelect *component2.CustomRadioToolbarItem
+	QualitySelect *component2.CustomSelectToolbarItem
+	FpsSelect     *component2.CustomSelectToolbarItem
 
 	// 帧率显示
-	FpsLabel *component.CustomLabelToolbarItem
+	FpsLabel *component2.CustomLabelToolbarItem
 
 	createDisplay bool // 是否创建显示选择
 	isShowToolbar bool // 工具栏是否可见
@@ -53,7 +53,7 @@ func (ui *MainUI) NewToolbar() {
 
 	ui.initToolBarUI()
 
-	ui.toolbar.Toolbar.Resize(config.ToolbarSize)
+	ui.toolbar.Toolbar.Resize(config2.ToolbarSize)
 
 	ui.toolbar.Toolbar.Append(ui.toolbar.ModeSelect)
 	ui.toolbar.Toolbar.Append(ui.toolbar.ModeState)
@@ -80,10 +80,10 @@ func (ui *MainUI) NewToolbar() {
 func (ui *MainUI) initToolBarUI() {
 	ui.toolbar.isShowToolbar = true
 
-	ui.toolbar.StatusLabel = component.NewCustomLabelToolbarItem("就绪")
-	ui.toolbar.ConnectBtn = component.NewCustomButtonToolbarItem(config.ConnectBtnNameOpen, ui.onConnectClick)
+	ui.toolbar.StatusLabel = component2.NewCustomLabelToolbarItem("就绪")
+	ui.toolbar.ConnectBtn = component2.NewCustomButtonToolbarItem(config2.ConnectBtnNameOpen, ui.onConnectClick)
 
-	ui.toolbar.FullScreenBtn = component.NewCustomButtonToolbarItem(config.FullScreen, ui.onFullScreenClick)
+	ui.toolbar.FullScreenBtn = component2.NewCustomButtonToolbarItem(config2.FullScreen, ui.onFullScreenClick)
 
 	disPlayList := make([]string, 0)
 	switch runtime.GOOS {
@@ -100,33 +100,33 @@ func (ui *MainUI) initToolBarUI() {
 
 	}
 	if ui.toolbar.createDisplay {
-		ui.toolbar.DisplaySelect = component.NewCustomRadioToolbarItem(disPlayList, ui.onDisplayChanged)
+		ui.toolbar.DisplaySelect = component2.NewCustomRadioToolbarItem(disPlayList, ui.onDisplayChanged)
 		ui.toolbar.DisplaySelect.Radio.Horizontal = true
 		ui.toolbar.DisplaySelect.Radio.Required = true
 		ui.toolbar.DisplaySelect.Radio.SetSelected(disPlayList[0])
 	}
 
 	// 创建性能监控按钮
-	ui.toolbar.PerfStatsBtn = component.NewCustomButtonToolbarItem(config.ShowPerfStats, ui.togglePerformanceStats)
+	ui.toolbar.PerfStatsBtn = component2.NewCustomButtonToolbarItem(config2.ShowPerfStats, ui.togglePerformanceStats)
 
 	// 创建质量选择
-	screenConfig := config.GetConfig().ScreenConfig
+	screenConfig := config2.GetConfig().ScreenConfig
 	qualityList := make([]string, 0, len(screenConfig.QualityList))
 	for _, setting := range screenConfig.QualityList {
 		qualityList = append(qualityList, setting.Name)
 	}
-	ui.toolbar.QualitySelect = component.NewCustomSelectToolbarItem(qualityList, ui.onQualityChanged)
+	ui.toolbar.QualitySelect = component2.NewCustomSelectToolbarItem(qualityList, ui.onQualityChanged)
 	ui.toolbar.QualitySelect.Select.SetSelected(screenConfig.DefaultQuality)
 
 	// 创建帧率选择
-	ui.toolbar.FpsSelect = component.NewCustomSelectToolbarItem(kit.SliceToStrList(screenConfig.FrameRates), ui.onFPSChanged)
+	ui.toolbar.FpsSelect = component2.NewCustomSelectToolbarItem(kit.SliceToStrList(screenConfig.FrameRates), ui.onFPSChanged)
 	ui.toolbar.FpsSelect.Select.SetSelected(kit.AnyToStr(screenConfig.DefaultFrameRate))
 
-	ui.toolbar.FpsLabel = component.NewCustomLabelToolbarItem("FPS: 0")
+	ui.toolbar.FpsLabel = component2.NewCustomLabelToolbarItem("FPS: 0")
 
 	// 创建模式选择
-	ui.toolbar.ModeSelect = component.NewCustomSliderToolbarItem(ui.onModeChanged)
-	ui.toolbar.ModeState = component.NewCustomLabelToolbarItem(config.ControlledEnd)
+	ui.toolbar.ModeSelect = component2.NewCustomSliderToolbarItem(ui.onModeChanged)
+	ui.toolbar.ModeState = component2.NewCustomLabelToolbarItem(config2.ControlledEnd)
 }
 
 func (t *ToolbarUI) SetStatus(status string) {

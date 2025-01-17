@@ -3,7 +3,7 @@ package component
 import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/widget"
-	"p2p_remote_desk/config"
+	"p2p_remote_desk/client/config"
 )
 
 type CustomButtonToolbarItem struct {

@@ -5,7 +5,7 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"image"
-	"p2p_remote_desk/internal/capture"
+	"p2p_remote_desk/client/internal/capture"
 	"time"
 )
 
