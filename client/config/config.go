@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"github.com/pelletier/go-toml/v2"
+	"github.com/plutodemon/slog"
 	"os"
 	"path/filepath"
 	"sync"
@@ -28,7 +29,7 @@ type RemoteConfig struct {
 	PerformanceConfig *Performance `toml:"performance"`
 
 	// 日志设置
-	LogConfig *LogSetting `toml:"log"`
+	LogConfig *slog.LogSetting `toml:"log"`
 }
 
 type Server struct {

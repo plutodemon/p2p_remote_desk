@@ -4,8 +4,8 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+	"github.com/plutodemon/slog"
 	config2 "p2p_remote_desk/client/config"
-	"p2p_remote_desk/client/logger"
 	"time"
 )
 
@@ -58,7 +58,7 @@ func (w *LoginWindow) setupUI() {
 	// 如果是开发环境，添加离线登录按钮
 	if config2.IsDevelopment() {
 		offlineBtn := widget.NewButton("离线登录", func() {
-			logger.Info("使用离线模式登录")
+			slog.Info("使用离线模式登录")
 			if w.onLoggedIn != nil {
 				w.onLoggedIn()
 			}
@@ -85,7 +85,7 @@ func (w *LoginWindow) handleLogin(username, password string) {
 
 	// 验证用户名和密码
 	if username == "root" && password == "123" {
-		logger.Info("用户登录成功: %s", username)
+		slog.Info("用户登录成功: %s", username)
 		if w.onLoggedIn != nil {
 			w.onLoggedIn()
 		}

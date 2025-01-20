@@ -1,8 +1,8 @@
 package ui
 
 import (
+	"github.com/plutodemon/slog"
 	config2 "p2p_remote_desk/client/config"
-	"p2p_remote_desk/client/logger"
 	"strconv"
 	"time"
 )
@@ -26,7 +26,7 @@ func (ui *MainUI) handleControllerConnect() {
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
-				logger.Error("连接过程发生panic: %v", r)
+				slog.Error("连接过程发生panic: %v", r)
 				ui.toolbar.SetStatus("连接异常")
 				ui.toolbar.ConnectBtn.Button.Enable()
 			}
@@ -34,7 +34,7 @@ func (ui *MainUI) handleControllerConnect() {
 
 		// todo 连接逻辑
 		//if err := ui.screenCapture.Connect(serverAddr); err != nil {
-		//	logger.Error("连接失败: %v", err)
+		//	slog.Error("连接失败: %v", err)
 		//	ui.toolbar.SetStatus("连接失败")
 		//	ui.toolbar.ConnectBtn.Button.Enable()
 		//	return
@@ -118,7 +118,7 @@ func (ui *MainUI) onQualityChanged(s string) {
 func (ui *MainUI) onFPSChanged(s string) {
 	_, err := strconv.Atoi(s)
 	if err != nil {
-		logger.Error("解析帧率失败: %v", err)
+		slog.Error("解析帧率失败: %v", err)
 		return
 	}
 
@@ -171,7 +171,7 @@ func (ui *MainUI) StartCapture() {
 			if ui.screenCapture != nil {
 				img, err := ui.screenCapture.CaptureScreen()
 				if err != nil {
-					logger.Error("屏幕捕获失败: %v", err)
+					slog.Error("屏幕捕获失败: %v", err)
 					continue
 				}
 

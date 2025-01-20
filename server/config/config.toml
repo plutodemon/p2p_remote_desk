@@ -1,0 +1,13 @@
+# 日志设置
+[log]
+console = true
+file = true
+file_path = "logs"
+max_size = 50
+max_backups = 30
+max_age = 7
+compress = true
+local_time = true
+format = "rd_server_%s.log"
+is_dev = true
+level = "debug"
