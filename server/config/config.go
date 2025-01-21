@@ -3,15 +3,10 @@ package config
 import (
 	"fmt"
 	"github.com/pelletier/go-toml/v2"
-	"github.com/plutodemon/slog"
+	"github.com/plutodemon/llog"
 	"os"
 	"path/filepath"
 	"sync"
-)
-
-var (
-	cfg  *Config
-	once sync.Once
 )
 
 // Config 服务器配置结构
@@ -29,58 +24,60 @@ type Config struct {
 	} `toml:"performance"`
 
 	// 日志配置
-	LogConfig *slog.LogSetting `toml:"log"`
+	LogConfig *llog.LogSetting `toml:"log"`
 
 	// 环境配置
 	Environment string `toml:"environment"` // development 或 production
 }
 
+var (
+	config     *Config
+	once       sync.Once
+	configPath string
+)
+
+func init() {
+	// 设置项目内部配置路径
+	configPath = filepath.Join("config", "server.toml")
+}
+
 // Init 初始化配置
 func Init() error {
-	return initConfig()
-}
-
-// GetConfig 获取配置实例
-func GetConfig() *Config {
-	if cfg == nil {
-		panic("配置未初始化")
-	}
-	return cfg
-}
-
-// IsDevelopment 判断是否为开发环境
-func IsDevelopment() bool {
-	return GetConfig().Environment == "development"
+	var err error
+	once.Do(func() {
+		err = initConfig()
+	})
+	return err
 }
 
 // initConfig 初始化配置
 func initConfig() error {
-	var err error
-	once.Do(func() {
-		cfg = &Config{}
+	// 读取配置文件
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		return fmt.Errorf("读取配置文件失败: %v", err)
+	}
 
-		// 确保配置目录存在
-		configDir := "config"
-		if err = os.MkdirAll(configDir, 0755); err != nil {
-			return
-		}
+	// 解析配置
+	cfg := &Config{}
+	if err = toml.Unmarshal(data, cfg); err != nil {
+		return fmt.Errorf("解析配置文件失败: %v", err)
+	}
 
-		// 配置文件路径
-		configFile := filepath.Join(configDir, "server.toml")
+	config = cfg
 
-		// 读取配置文件
-		data, err := os.ReadFile(configFile)
-		if err != nil {
-			err = fmt.Errorf("读取配置文件失败: %w", err)
-			return
-		}
+	return nil
+}
 
-		// 解析配置
-		if err = toml.Unmarshal(data, cfg); err != nil {
-			err = fmt.Errorf("解析配置文件失败: %w", err)
-			return
-		}
-	})
+// GetConfig 获取配置实例
+func GetConfig() Config {
+	if config == nil {
+		panic("配置未初始化")
+	}
+	return *config
+}
 
-	return err
+// IsDevelopment 判断是否为开发环境
+func IsDevelopment() bool {
+	return GetConfig().Environment == Development
 }

@@ -2,7 +2,7 @@ package internal
 
 import (
 	"fmt"
-	"github.com/plutodemon/slog"
+	"github.com/plutodemon/llog"
 	"net"
 	"p2p_remote_desk/server/config"
 	"sync"
@@ -35,7 +35,7 @@ func (s *Server) Start() error {
 	}
 	s.listener = listener
 
-	slog.Info("服务器启动成功，监听地址: %s", addr)
+	llog.Info("服务器启动成功，监听地址: %s", addr)
 	s.running = true
 
 	// 开始接受连接
@@ -64,7 +64,7 @@ func (s *Server) Stop() error {
 	s.mutex.Unlock()
 
 	s.running = false
-	slog.Info("服务器已停止")
+	llog.Info("服务器已停止")
 	return nil
 }
 
@@ -74,7 +74,7 @@ func (s *Server) acceptConnections() {
 		conn, err := s.listener.Accept()
 		if err != nil {
 			if s.running {
-				slog.Error("接受连接失败: %v", err)
+				llog.Error("接受连接失败: %v", err)
 			}
 			continue
 		}
@@ -94,7 +94,7 @@ func (s *Server) addClient(client *Client) {
 	defer s.mutex.Unlock()
 
 	s.clients[client.ID] = client
-	slog.Info("新客户端连接: %s", client.ID)
+	llog.Info("新客户端连接: %s", client.ID)
 }
 
 // removeClient 移除客户端
@@ -105,7 +105,7 @@ func (s *Server) removeClient(clientID string) {
 	if client, exists := s.clients[clientID]; exists {
 		client.Close()
 		delete(s.clients, clientID)
-		slog.Info("客户端断开连接: %s", clientID)
+		llog.Info("客户端断开连接: %s", clientID)
 	}
 }
 

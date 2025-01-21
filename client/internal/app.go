@@ -3,7 +3,7 @@ package internal
 import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
-	"github.com/plutodemon/slog"
+	"github.com/plutodemon/llog"
 	"p2p_remote_desk/client/config"
 	window2 "p2p_remote_desk/client/internal/window"
 )
@@ -56,5 +56,5 @@ func (a *App) Cleanup() {
 	if a.MainWindow != nil {
 		a.MainWindow.Cleanup()
 	}
-	slog.Cleanup()
+	llog.Cleanup()
 }

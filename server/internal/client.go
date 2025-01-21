@@ -3,7 +3,7 @@ package internal
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/plutodemon/slog"
+	"github.com/plutodemon/llog"
 	"net"
 	"p2p_remote_desk/server/config"
 	"sync"
@@ -52,13 +52,13 @@ func (c *Client) Handle() {
 			_ = c.conn.SetReadDeadline(time.Now().Add(time.Second * 30))
 			n, err := c.conn.Read(buffer)
 			if err != nil {
-				slog.Error("读取客户端数据失败: %v", err)
+				llog.Error("读取客户端数据失败: %v", err)
 				return
 			}
 
 			// 处理接收到的数据
 			if err := c.handleMessage(buffer[:n]); err != nil {
-				slog.Error("处理客户端消息失败: %v", err)
+				llog.Error("处理客户端消息失败: %v", err)
 				return
 			}
 		}
@@ -116,7 +116,7 @@ func (c *Client) SendMessage(message []byte) {
 	case c.sendChan <- message:
 	case <-c.closeChan:
 	default:
-		slog.Warn("客户端发送缓冲区已满: %s", c.ID)
+		llog.Warn("客户端发送缓冲区已满: %s", c.ID)
 	}
 }
 
@@ -126,7 +126,7 @@ func (c *Client) sendLoop() {
 		select {
 		case message := <-c.sendChan:
 			if err := c.writeMessage(message); err != nil {
-				slog.Error("发送消息失败: %v", err)
+				llog.Error("发送消息失败: %v", err)
 				c.Close()
 				return
 			}
@@ -148,6 +148,6 @@ func (c *Client) Close() {
 	c.closeOnce.Do(func() {
 		close(c.closeChan)
 		_ = c.conn.Close()
-		slog.Info("客户端连接已关闭: %s", c.ID)
+		llog.Info("客户端连接已关闭: %s", c.ID)
 	})
 }

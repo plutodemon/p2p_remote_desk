@@ -3,7 +3,7 @@ package config
 import (
 	"fmt"
 	"github.com/pelletier/go-toml/v2"
-	"github.com/plutodemon/slog"
+	"github.com/plutodemon/llog"
 	"os"
 	"path/filepath"
 	"sync"
@@ -29,7 +29,7 @@ type RemoteConfig struct {
 	PerformanceConfig *Performance `toml:"performance"`
 
 	// 日志设置
-	LogConfig *slog.LogSetting `toml:"log"`
+	LogConfig *llog.LogSetting `toml:"log"`
 }
 
 type Server struct {
@@ -73,21 +73,10 @@ type Performance struct {
 	SkipIdenticalFrames bool `toml:"skip_identical_frames"`
 }
 
-type LogSetting struct {
-	Console    bool   `toml:"console"`
-	File       bool   `toml:"file"`
-	FilePath   string `toml:"file_path"`
-	MaxSize    int    `toml:"max_size"`
-	MaxAge     int    `toml:"max_age"`
-	MaxBackups int    `toml:"max_backups"`
-	Compress   bool   `toml:"compress"`
-	LocalTime  bool   `toml:"local_time"`
-	Format     string `toml:"format"`
-}
-
 var (
-	Config     *RemoteConfig
+	config     *RemoteConfig
 	configLock sync.RWMutex
+	once       sync.Once
 	configPath string
 )
 
@@ -98,7 +87,11 @@ func init() {
 
 // Init 初始化配置
 func Init() error {
-	return Load()
+	var err error
+	once.Do(func() {
+		err = Load()
+	})
+	return err
 }
 
 // Load 加载配置文件
@@ -118,7 +111,7 @@ func Load() error {
 		return fmt.Errorf("解析配置文件失败: %v", err)
 	}
 
-	Config = cfg
+	config = cfg
 	return nil
 }
 
@@ -127,12 +120,12 @@ func Save() error {
 	configLock.Lock()
 	defer configLock.Unlock()
 
-	if Config == nil {
+	if config == nil {
 		return fmt.Errorf("配置未初始化")
 	}
 
 	// 将配置转换为TOML格式
-	data, err := toml.Marshal(Config)
+	data, err := toml.Marshal(config)
 	if err != nil {
 		return fmt.Errorf("序列化配置失败: %v", err)
 	}
@@ -146,40 +139,26 @@ func Save() error {
 }
 
 // GetConfig 获取配置
-func GetConfig() *RemoteConfig {
+func GetConfig() RemoteConfig {
 	configLock.RLock()
 	defer configLock.RUnlock()
-	return Config
+	if config == nil {
+		panic("配置未初始化")
+	}
+	return *config
 }
 
 // SetConfig 设置配置
 func SetConfig(cfg *RemoteConfig) {
 	configLock.Lock()
 	defer configLock.Unlock()
-	Config = cfg
+	config = cfg
 }
 
 // IsDevelopment 判断是否为开发环境
 func IsDevelopment() bool {
-	cfg := GetConfig()
-	if cfg == nil {
+	if config == nil {
 		return false
 	}
-	return cfg.Environment == "development"
-}
-
-// createDefaultConfig 创建默认配置
-func createDefaultConfig() error {
-	// 将默认配置写入文件
-	//data, err := toml.Marshal(defaultConfig)
-	//if err != nil {
-	//	return fmt.Errorf("序列化默认配置失败: %v", err)
-	//}
-	//
-	//if err := os.WriteFile(configPath, data, 0644); err != nil {
-	//	return fmt.Errorf("写入默认配置失败: %v", err)
-	//}
-	//
-	//Config = defaultConfig
-	return nil
+	return config.Environment == Development
 }

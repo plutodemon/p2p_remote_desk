@@ -3,6 +3,11 @@ package config
 import "fyne.io/fyne/v2"
 
 const (
+	Development = "development" // 开发环境
+	Production  = "production"  // 生产环境
+)
+
+const (
 	SliderClose = 0 // 滑块关闭
 	SliderOpen  = 1 // 滑块打开
 	SliderStep  = 1 // 滑块步长
