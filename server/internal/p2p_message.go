@@ -10,13 +10,13 @@ import (
 type MessageType string
 
 const (
-	// 注册消息
+	// MsgRegister 注册消息
 	MsgRegister MessageType = "register"
-	// 请求连接对方
+	// MsgConnect 请求连接对方
 	MsgConnect MessageType = "connect"
-	// 打洞消息
+	// MsgPunch 打洞消息
 	MsgPunch MessageType = "punch"
-	// NAT类型检测
+	// MsgNATDetect NAT类型检测
 	MsgNATDetect MessageType = "nat_detect"
 )
 

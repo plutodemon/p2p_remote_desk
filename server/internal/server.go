@@ -23,18 +23,30 @@ type PeerInfo struct {
 
 // Server P2P中继服务器
 type Server struct {
-	listener net.Listener
-	peers    map[string]*PeerInfo // 存储所有连接的peer信息
-	mutex    sync.RWMutex
-	running  bool
-	done     chan struct{}
+	listener    net.Listener
+	peers       map[string]*PeerInfo // 存储所有连接的peer信息
+	mutex       sync.RWMutex
+	running     bool
+	done        chan struct{}
+	natDetector *NATDetector
 }
 
 // NewServer 创建新的服务器实例
 func NewServer() *Server {
+	// 创建NAT检测器
+	detector, err := NewNATDetector(
+		"stun1.l.google.com", 19302, // 主检测服务器
+		"stun2.l.google.com", 19302, // 备用检测服务器
+	)
+	if err != nil {
+		llog.Error("创建NAT检测器失败: %v", err)
+		detector = nil
+	}
+
 	return &Server{
-		peers: make(map[string]*PeerInfo),
-		done:  make(chan struct{}),
+		peers:       make(map[string]*PeerInfo),
+		done:        make(chan struct{}),
+		natDetector: detector,
 	}
 }
 
@@ -283,12 +295,50 @@ func (s *Server) handleConnectRequest(peer *PeerInfo, msg *Message) {
 
 // handleNATDetection 处理NAT类型检测
 func (s *Server) handleNATDetection(peer *PeerInfo) {
+	if s.natDetector == nil {
+		natInfo := NATInfo{
+			Type:      string(NATUnknown),
+			Symmetric: true, // 默认假设是对称NAT
+		}
+		if err := WriteMessage(peer.Conn, MsgNATDetect, natInfo); err != nil {
+			llog.Error("发送NAT检测结果失败: %v", err)
+		}
+		return
+	}
+
+	// 创建UDP连接用于检测
+	udpAddr, err := net.ResolveUDPAddr("udp", ":0")
+	if err != nil {
+		llog.Error("创建UDP地址失败: %v", err)
+		return
+	}
+
+	udpConn, err := net.ListenUDP("udp", udpAddr)
+	if err != nil {
+		llog.Error("创建UDP连接失败: %v", err)
+		return
+	}
+	defer udpConn.Close()
+
+	// 执行NAT类型检测
+	natType, err := s.natDetector.DetectNATType(udpConn)
+	if err != nil {
+		llog.Error("NAT类型检测失败: %v", err)
+		natType = NATUnknown
+	}
+
+	// 更新peer的NAT类型
+	peer.NATType = string(natType)
+
+	// 发送检测结果
 	natInfo := NATInfo{
-		Type:      "Unknown",
-		Symmetric: true,
+		Type:      string(natType),
+		Symmetric: natType == NATSymmetric,
 	}
 
 	if err := WriteMessage(peer.Conn, MsgNATDetect, natInfo); err != nil {
 		llog.Error("发送NAT检测结果失败: %v", err)
 	}
+
+	llog.Info("Peer %s 的NAT类型: %s", peer.ID, natType)
 }
