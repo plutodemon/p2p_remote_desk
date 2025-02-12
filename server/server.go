@@ -28,7 +28,7 @@ func main() {
 	// 创建并启动服务器
 	server := internal.NewServer()
 	if err := server.Start(); err != nil {
-		llog.Error("服务器启动失败: %v", err)
+		llog.Error("服务器启动失败: ", err)
 		os.Exit(1)
 	}
 }

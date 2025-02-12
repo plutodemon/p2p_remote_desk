@@ -27,7 +27,7 @@ func main() {
 	defer llog.Cleanup()
 
 	if err := glfw.Init(); err != nil {
-		llog.Error("初始化glfw失败: %v", err)
+		llog.Error("初始化glfw失败: ", err)
 		os.Exit(1)
 	}
 	defer glfw.Terminate()

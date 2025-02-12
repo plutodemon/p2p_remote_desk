@@ -1,0 +1,69 @@
+@startuml
+
+title
+Server Mind Map
+end title
+
+header
+server
+end header
+
+start
+
+:客户端请求;
+
+if (登录) then (成功)
+:"条件4成立的动作";
+else
+  ->"客户端请求";
+endif
+
+switch (请求类型)
+case ( 登录 )
+  :Text 1;
+case ( 授权 )
+  :Text 2;
+case ( 查询 )
+  :Text 3;
+case ( 连接 )
+  :Text 4;
+case ( 条件 E )
+  :Text 5;
+endswitch
+
+:验证,授权,登录;
+:判断NAT类型;
+if (尝试打洞) then (打洞成功)
+    :条件1成立时执行的动作;
+    if ("分支条件2判断") then (no)
+        :"条件2不成立时执行的动作";
+    else
+        if ("条件3判断") then (yes)
+            :"条件3成立时的动作";
+        else (no)
+            :"条件3不成立时的动作";
+        endif
+    endif
+    :"顺序步骤3处理";
+else (打洞失败)
+    :"条件1不成立时执行的动作";
+
+endif
+
+if ("条件4判断") then (yes)
+:"条件4成立的动作";
+else
+    if ("条件5判断") then (yes)
+        :"条件5成立时的动作";
+    else (no)
+        :"条件5不成立时的动作";
+    endif
+endif
+
+stop
+
+footer
+server
+end footer
+
+@enduml

@@ -39,7 +39,7 @@ func NewServer() *Server {
 		"stun2.l.google.com", 19302, // 备用检测服务器
 	)
 	if err != nil {
-		llog.Error("创建NAT检测器失败: %v", err)
+		llog.Error("创建NAT检测器失败: ", err)
 		detector = nil
 	}
 
@@ -62,7 +62,7 @@ func (s *Server) Start() error {
 	}
 	s.listener = listener
 
-	llog.Info("P2P中继服务器启动成功，监听地址: %s", addr)
+	llog.Info("P2P中继服务器启动成功, 监听地址: ", addr)
 	s.running = true
 
 	// 启动清理过期连接的goroutine
@@ -113,7 +113,7 @@ func (s *Server) cleanupExpiredPeers() {
 			for id, peer := range s.peers {
 				// 如果peer超过5分钟没有活动，认为已断开
 				if now.Sub(peer.LastSeen) > 5*time.Minute {
-					llog.Info("清理过期peer: %s", id)
+					llog.Info("清理过期peer: ", id)
 					_ = peer.Conn.Close()
 					delete(s.peers, id)
 				}
@@ -129,7 +129,7 @@ func (s *Server) acceptConnections() {
 		conn, err := s.listener.Accept()
 		if err != nil {
 			if s.running {
-				llog.Error("接受连接失败: %v", err)
+				llog.Error("接受连接失败: ", err)
 			}
 			continue
 		}
@@ -146,7 +146,7 @@ func (s *Server) acceptConnections() {
 func (s *Server) handleConnection(conn net.Conn) {
 	defer func() {
 		if r := recover(); r != nil {
-			llog.Error("处理连接时发生panic: %v", r)
+			llog.Error("处理连接时发生panic: ", r)
 		}
 		conn.Close()
 	}()
@@ -154,7 +154,7 @@ func (s *Server) handleConnection(conn net.Conn) {
 	// 等待客户端注册
 	msg, err := ReadMessage(conn)
 	if err != nil {
-		llog.Error("读取注册消息失败: %v", err)
+		llog.Error("读取注册消息失败: ", err)
 		return
 	}
 
@@ -166,7 +166,7 @@ func (s *Server) handleConnection(conn net.Conn) {
 	// 解析注册信息
 	var payload RegisterPayload
 	if err := ParsePayload(msg, &payload); err != nil {
-		llog.Error("解析注册消息失败: %v", err)
+		llog.Error("解析注册消息失败: ", err)
 		return
 	}
 
@@ -203,7 +203,7 @@ func (s *Server) registerPeer(peer *PeerInfo) {
 	}
 
 	s.peers[peer.ID] = peer
-	llog.Info("新peer注册: %s (公网: %s:%d, 内网: %s:%d)",
+	llog.Info("新peer注册:  (公网: :%d, 内网: :%d)",
 		peer.ID, peer.PublicIP, peer.PublicPort, peer.LocalIP, peer.LocalPort)
 }
 
@@ -215,7 +215,7 @@ func (s *Server) unregisterPeer(peerID string) {
 	if peer, exists := s.peers[peerID]; exists {
 		_ = peer.Conn.Close()
 		delete(s.peers, peerID)
-		llog.Info("peer注销: %s", peerID)
+		llog.Info("peer注销: ", peerID)
 	}
 }
 
@@ -227,7 +227,7 @@ func (s *Server) handlePeerMessages(peer *PeerInfo) {
 
 		msg, err := ReadMessage(peer.Conn)
 		if err != nil {
-			llog.Error("读取消息失败: %v", err)
+			llog.Error("读取消息失败: ", err)
 			return
 		}
 
@@ -240,7 +240,7 @@ func (s *Server) handlePeerMessages(peer *PeerInfo) {
 		case MsgNATDetect:
 			s.handleNATDetection(peer)
 		default:
-			llog.Warn("未知的消息类型: %s", msg.Type)
+			llog.Warn("未知的消息类型: ", msg.Type)
 		}
 	}
 }
@@ -249,7 +249,7 @@ func (s *Server) handlePeerMessages(peer *PeerInfo) {
 func (s *Server) handleConnectRequest(peer *PeerInfo, msg *Message) {
 	var payload ConnectPayload
 	if err := ParsePayload(msg, &payload); err != nil {
-		llog.Error("解析连接请求失败: %v", err)
+		llog.Error("解析连接请求失败: ", err)
 		return
 	}
 
@@ -259,7 +259,7 @@ func (s *Server) handleConnectRequest(peer *PeerInfo, msg *Message) {
 	s.mutex.RUnlock()
 
 	if !exists {
-		llog.Error("目标peer不存在: %s", payload.TargetID)
+		llog.Error("目标peer不存在: ", payload.TargetID)
 		return
 	}
 
@@ -274,7 +274,7 @@ func (s *Server) handleConnectRequest(peer *PeerInfo, msg *Message) {
 
 	// 发送给目标peer
 	if err := WriteMessage(targetPeer.Conn, MsgPunch, punchMsg); err != nil {
-		llog.Error("发送打洞消息失败: %v", err)
+		llog.Error("发送打洞消息失败: ", err)
 		return
 	}
 
@@ -286,11 +286,11 @@ func (s *Server) handleConnectRequest(peer *PeerInfo, msg *Message) {
 	punchMsg.LocalPort = targetPeer.LocalPort
 
 	if err := WriteMessage(peer.Conn, MsgPunch, punchMsg); err != nil {
-		llog.Error("发送打洞消息失败: %v", err)
+		llog.Error("发送打洞消息失败: ", err)
 		return
 	}
 
-	llog.Info("已发送打洞消息: %s <-> %s", peer.ID, targetPeer.ID)
+	llog.Info("已发送打洞消息:  <-> ", peer.ID, targetPeer.ID)
 }
 
 // handleNATDetection 处理NAT类型检测
@@ -301,7 +301,7 @@ func (s *Server) handleNATDetection(peer *PeerInfo) {
 			Symmetric: true, // 默认假设是对称NAT
 		}
 		if err := WriteMessage(peer.Conn, MsgNATDetect, natInfo); err != nil {
-			llog.Error("发送NAT检测结果失败: %v", err)
+			llog.Error("发送NAT检测结果失败: ", err)
 		}
 		return
 	}
@@ -309,13 +309,13 @@ func (s *Server) handleNATDetection(peer *PeerInfo) {
 	// 创建UDP连接用于检测
 	udpAddr, err := net.ResolveUDPAddr("udp", ":0")
 	if err != nil {
-		llog.Error("创建UDP地址失败: %v", err)
+		llog.Error("创建UDP地址失败: ", err)
 		return
 	}
 
 	udpConn, err := net.ListenUDP("udp", udpAddr)
 	if err != nil {
-		llog.Error("创建UDP连接失败: %v", err)
+		llog.Error("创建UDP连接失败: ", err)
 		return
 	}
 	defer udpConn.Close()
@@ -323,7 +323,7 @@ func (s *Server) handleNATDetection(peer *PeerInfo) {
 	// 执行NAT类型检测
 	natType, err := s.natDetector.DetectNATType(udpConn)
 	if err != nil {
-		llog.Error("NAT类型检测失败: %v", err)
+		llog.Error("NAT类型检测失败: ", err)
 		natType = NATUnknown
 	}
 
@@ -337,8 +337,8 @@ func (s *Server) handleNATDetection(peer *PeerInfo) {
 	}
 
 	if err := WriteMessage(peer.Conn, MsgNATDetect, natInfo); err != nil {
-		llog.Error("发送NAT检测结果失败: %v", err)
+		llog.Error("发送NAT检测结果失败: ", err)
 	}
 
-	llog.Info("Peer %s 的NAT类型: %s", peer.ID, natType)
+	llog.Info("Peer  的NAT类型: ", peer.ID, natType)
 }
