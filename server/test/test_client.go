@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"p2p_remote_desk/server/internal"
+	"p2p_remote_desk/server/internal/ice"
 	"time"
 )
 
@@ -38,13 +38,13 @@ func main() {
 	localAddr := conn.LocalAddr().(*net.TCPAddr)
 
 	// 发送注册消息
-	registerMsg := internal.RegisterPayload{
+	registerMsg := ice.RegisterPayload{
 		PeerID:    *peerID,
 		LocalIP:   localAddr.IP.String(),
 		LocalPort: localAddr.Port,
 	}
 
-	if err := internal.WriteMessage(conn, internal.MsgRegister, registerMsg); err != nil {
+	if err := ice.WriteMessage(conn, ice.MsgRegister, registerMsg); err != nil {
 		fmt.Printf("发送注册消息失败: %v\n", err)
 		os.Exit(1)
 	}
@@ -53,11 +53,11 @@ func main() {
 
 	// 如果指定了目标ID，发送连接请求
 	if *targetID != "" {
-		connectMsg := internal.ConnectPayload{
+		connectMsg := ice.ConnectPayload{
 			TargetID: *targetID,
 		}
 
-		if err := internal.WriteMessage(conn, internal.MsgConnect, connectMsg); err != nil {
+		if err := ice.WriteMessage(conn, ice.MsgConnect, connectMsg); err != nil {
 			fmt.Printf("发送连接请求失败: %v\n", err)
 			os.Exit(1)
 		}
@@ -90,16 +90,16 @@ func main() {
 
 func handleServerMessages(conn net.Conn, udpConn *net.UDPConn) {
 	for {
-		msg, err := internal.ReadMessage(conn)
+		msg, err := ice.ReadMessage(conn)
 		if err != nil {
 			fmt.Printf("读取服务器消息失败: %v\n", err)
 			os.Exit(1)
 		}
 
 		switch msg.Type {
-		case internal.MsgPunch:
+		case ice.MsgPunch:
 			handlePunchMessage(msg, udpConn)
-		case internal.MsgNATDetect:
+		case ice.MsgNATDetect:
 			handleNATDetection(msg)
 		default:
 			fmt.Printf("未知的消息类型: %s\n", msg.Type)
@@ -107,8 +107,8 @@ func handleServerMessages(conn net.Conn, udpConn *net.UDPConn) {
 	}
 }
 
-func handlePunchMessage(msg *internal.Message, udpConn *net.UDPConn) {
-	var payload internal.PunchPayload
+func handlePunchMessage(msg *ice.Message, udpConn *net.UDPConn) {
+	var payload ice.PunchPayload
 	data, _ := json.Marshal(msg.Payload)
 	if err := json.Unmarshal(data, &payload); err != nil {
 		fmt.Printf("解析打洞消息失败: %v\n", err)
@@ -124,7 +124,7 @@ func handlePunchMessage(msg *internal.Message, udpConn *net.UDPConn) {
 	go startUDPPunching(udpConn, payload)
 }
 
-func startUDPPunching(udpConn *net.UDPConn, target internal.PunchPayload) {
+func startUDPPunching(udpConn *net.UDPConn, target ice.PunchPayload) {
 	// 首先尝试公网地址
 	publicAddr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", target.PublicIP, target.PublicPort))
 	if err != nil {
@@ -174,8 +174,8 @@ func handleUDPMessages(conn *net.UDPConn) {
 	}
 }
 
-func handleNATDetection(msg *internal.Message) {
-	var natInfo internal.NATInfo
+func handleNATDetection(msg *ice.Message) {
+	var natInfo ice.NATInfo
 	data, _ := json.Marshal(msg.Payload)
 	if err := json.Unmarshal(data, &natInfo); err != nil {
 		fmt.Printf("解析NAT信息失败: %v\n", err)

@@ -1,4 +1,4 @@
-package internal
+package signaling
 
 import (
 	"encoding/json"
@@ -31,7 +31,7 @@ type SignalMessage struct {
 	Payload interface{} `json:"payload"` // 消息内容（SDP或Candidate）
 }
 
-func SignalServer() {
+func Start() {
 	http.HandleFunc("/ws", handleWebSocket)
 	log.Println("信令服务器启动，监听 :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))

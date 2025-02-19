@@ -1,4 +1,4 @@
-package internal
+package ice
 
 import (
 	"encoding/json"

@@ -1,10 +1,11 @@
-package internal
+package ice
 
 import (
 	"fmt"
 	"github.com/plutodemon/llog"
 	"net"
 	"p2p_remote_desk/server/config"
+	"p2p_remote_desk/server/lkit"
 	"sync"
 	"time"
 )
@@ -53,7 +54,7 @@ func NewServer() *Server {
 // Start 启动服务器
 func (s *Server) Start() error {
 	cfg := config.GetConfig()
-	addr := fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)
+	addr := lkit.GetAddr(cfg.Server.Host, cfg.Server.IcePort)
 
 	// 创建TCP监听器
 	listener, err := net.Listen("tcp", addr)

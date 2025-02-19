@@ -2,6 +2,13 @@
 version = "0.1.0"
 environment = "development"  # development 或 production
 
+# 服务设置
+[server]
+host = "0.0.0.0"
+auth_port = 8080
+signal_port = 8081
+ice_port = 8082
+
 # 日志设置
 [log]
 console = true

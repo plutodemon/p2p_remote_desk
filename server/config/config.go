@@ -11,23 +11,22 @@ import (
 
 // Config 服务器配置结构
 type Config struct {
-	// 服务器基本配置
-	Server struct {
-		Host string `toml:"host"`
-		Port int    `toml:"port"`
-	} `toml:"server"`
+	// 环境配置
+	Environment string `toml:"environment"` // development 或 production
 
-	// 性能相关配置
-	Performance struct {
-		MaxConnections int `toml:"max_connections"`
-		BufferSize     int `toml:"buffer_size"`
-	} `toml:"performance"`
+	// 服务器基本配置
+	Server *ServerConfig `toml:"server"`
 
 	// 日志配置
 	LogConfig *llog.LogSetting `toml:"log"`
+}
 
-	// 环境配置
-	Environment string `toml:"environment"` // development 或 production
+// ServerConfig 服务器配置
+type ServerConfig struct {
+	Host       string `toml:"host"`
+	AuthPort   int    `toml:"auth_port"`
+	SignalPort int    `toml:"signal_port"`
+	IcePort    int    `toml:"ice_port"`
 }
 
 var (

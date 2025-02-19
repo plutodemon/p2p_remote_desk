@@ -6,13 +6,13 @@
 
 ### 项目概述
 
-客户端使用Go语言编写, UI界面采用Fyne框架, 得益于Go语言良好的跨平台性 支持多种操作系统Win/Linux/MacOS/Android/iOS
+客户端使用Go语言编写, UI界面采用Fyne框架, 得益于Go语言良好的跨平台性 支持多种操作系统 Win/Linux/MacOS/Android/iOS
 
-服务端同样采用Go语言编写, Web使用Gin框架 网络使用Gnet框架, 采用p2p打洞方案以降低延迟和提升传输质量, 备用方案为vpn传输
+服务端同样采用Go语言编写, 采用WebRtc框架, 集信令服务, ice服务, 验证服务于一体
 
-## 核心功能
+# 核心功能
 
-### 客户端
+## 客户端
 
 - 支持控制端和被控端两种模式
     - 简洁直观的工具栏
@@ -31,8 +31,12 @@
     - Goroutine 数量监控
 - 心跳机制 维持连接 减少重新打洞 提升稳定性
 
-### 服务端
+## 服务端
 
-- 账户管理
-- 打洞服务
-- 传输服务
+### 服务端采用WebRtc框架
+
+参考教程为 [WebRtc教程](https://tonybai.com/2024/12/14/webrtc-first-lesson-how-connection-estabish/)
+这个教程有很多篇文章 都可以看下
+
+其流程图为: (图片截取自上述教程)  
+<img src="/png/webRtc_step.png"  width = "30%" />
