@@ -33,5 +33,15 @@
 
 2. rpc使用:  
    安装官方的 [protoc](https://github.com/google/protobuf/releases) 工具  
-   然后安装 go 的插件 `go install google.golang.org/protobuf/cmd/protoc-gen-go@latest`
+   然后安装 go 的插件 `go install google.golang.org/protobuf/cmd/protoc-gen-go@latest`  
    然后安装 grpc 的插件 `go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest`
+
+### 25-2-21
+
+- 突然想到一个点子 就是做一个软件 用来给自己做一些决定 就像电影中的那样 和关圣帝君请示 给圣杯那样子的  
+  其中涉及到的元素有 时间（做这件事情的时间/此时的时间/可以配合黄历） 想做这件事情的强烈程度（低/高）  
+  买断制 不含广告 定价2-7元 另外包含答案之书 可含邀请码 （推广几百可返现）
+
+- 六约 包含进度记录 每日记录 目标 或者一万小时法则 这是基本功能  
+  另外可以集成agent 每日推送信息日报 选择自己感兴趣的领域  
+  买断制 不含广告 定价2-7元 可含邀请码（推广几百可返现）

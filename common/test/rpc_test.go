@@ -9,7 +9,7 @@ import (
 )
 
 type HelloServiceInterface interface {
-	Hello(request string, reply *string) error
+	Hello(request *String, reply *string) error
 }
 
 type HelloService struct{}
