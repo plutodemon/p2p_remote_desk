@@ -15,8 +15,8 @@ require (
 	github.com/pion/webrtc/v4 v4.0.9
 	github.com/plutodemon/llog v0.1.0
 	github.com/stretchr/testify v1.10.0
-	google.golang.org/grpc v1.38.0
-	google.golang.org/protobuf v1.34.1
+	google.golang.org/grpc v1.70.0
+	google.golang.org/protobuf v1.35.2
 )
 
 require (

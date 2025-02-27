@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+option go_package = "./;common";
+package common;
+
+message LoginRequest {
+  string username = 1;
+  string password = 2;
+}
+
+enum AuthCode {
+  OK = 0;              // 成功
+  InvalidUsername = 1; // 用户名错误
+  InvalidPassword = 2; // 密码错误
+}
+
+message LoginResponse {
+  AuthCode code = 1;
+}
+
+service Auth {
+  rpc Login (LoginRequest) returns (LoginResponse);
+}
