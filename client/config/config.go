@@ -2,11 +2,12 @@ package config
 
 import (
 	"fmt"
-	"github.com/pelletier/go-toml/v2"
-	"github.com/plutodemon/llog"
 	"os"
 	"path/filepath"
 	"sync"
+
+	"github.com/pelletier/go-toml/v2"
+	"github.com/plutodemon/llog"
 )
 
 // RemoteConfig 配置结构体
@@ -33,8 +34,10 @@ type RemoteConfig struct {
 }
 
 type Server struct {
-	Address string `toml:"address"`
-	Port    string `toml:"port"`
+	Address    string `toml:"address"`
+	AuthPort   int    `toml:"auth_port"`
+	SignalPort int    `toml:"signal_port"`
+	IcePort    int    `toml:"ice_port"`
 }
 
 type Screen struct {

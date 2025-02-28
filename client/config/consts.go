@@ -29,6 +29,7 @@ const (
 
 var ToolbarSize = fyne.NewSize(ToolbarItemWide, ToolbarItemHigh)
 var ToolbarItemSize = fyne.NewSize(ToolbarItemWide, ToolbarItemHigh)
+var LoginEntrySize = fyne.NewSize(200, 40)
 
 const (
 	ToolbarItemWide = 10

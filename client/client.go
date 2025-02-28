@@ -2,17 +2,16 @@ package main
 
 import (
 	"fmt"
-	"github.com/go-gl/glfw/v3.3/glfw"
-	"github.com/plutodemon/llog"
 	"os"
+
 	"p2p_remote_desk/client/config"
 	"p2p_remote_desk/client/internal"
+
+	"github.com/go-gl/glfw/v3.3/glfw"
+	"github.com/plutodemon/llog"
 )
 
 func main() {
-	// 设置全局panic处理
-	defer llog.HandlePanic()
-
 	// 初始化配置
 	if err := config.Init(); err != nil {
 		fmt.Printf("初始化配置失败: %v\n", err)
@@ -25,6 +24,9 @@ func main() {
 		os.Exit(1)
 	}
 	defer llog.Cleanup()
+
+	// 设置全局panic处理
+	defer llog.HandlePanic()
 
 	if err := glfw.Init(); err != nil {
 		llog.Error("初始化glfw失败: ", err)

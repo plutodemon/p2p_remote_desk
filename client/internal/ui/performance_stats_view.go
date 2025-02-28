@@ -2,11 +2,13 @@ package ui
 
 import (
 	"fmt"
+	"time"
+
+	"p2p_remote_desk/client/internal/monitor"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
-	"p2p_remote_desk/client/internal/monitor"
-	"time"
 )
 
 // PerformanceStatsView 性能监控视图

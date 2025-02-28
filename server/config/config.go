@@ -2,11 +2,12 @@ package config
 
 import (
 	"fmt"
-	"github.com/pelletier/go-toml/v2"
-	"github.com/plutodemon/llog"
 	"os"
 	"path/filepath"
 	"sync"
+
+	"github.com/pelletier/go-toml/v2"
+	"github.com/plutodemon/llog"
 )
 
 // Config 服务器配置结构

@@ -1,18 +1,21 @@
 package window
 
 import (
+	"time"
+
+	"p2p_remote_desk/client/config"
+	"p2p_remote_desk/client/internal/network/auth"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 	"github.com/plutodemon/llog"
-	config2 "p2p_remote_desk/client/config"
-	"time"
 )
 
 // LoginWindow 登录窗口管理器
 type LoginWindow struct {
 	window     fyne.Window
-	onLoggedIn func() // 登录成功的回调函数
+	onLoggedIn func()
 }
 
 // NewLoginWindow 创建登录窗口管理器
@@ -22,7 +25,6 @@ func NewLoginWindow(window fyne.Window, onLoggedIn func()) *LoginWindow {
 		onLoggedIn: onLoggedIn,
 	}
 
-	// 创建登录界面
 	w.setupUI()
 
 	return w
@@ -30,21 +32,19 @@ func NewLoginWindow(window fyne.Window, onLoggedIn func()) *LoginWindow {
 
 // setupUI 设置登录界面
 func (w *LoginWindow) setupUI() {
-	newSize := fyne.NewSize(200, 40)
-
 	usernameEntry := widget.NewEntry()
 	usernameEntry.SetPlaceHolder("用户名")
-	usernameEntry.Resize(newSize)
+	usernameEntry.Resize(config.LoginEntrySize)
 
 	passwordEntry := widget.NewPasswordEntry()
 	passwordEntry.SetPlaceHolder("密码")
-	passwordEntry.Resize(newSize)
+	passwordEntry.Resize(config.LoginEntrySize)
 
 	// 创建登录按钮
 	loginBtn := widget.NewButton("登录", func() {
 		w.handleLogin(usernameEntry.Text, passwordEntry.Text)
 	})
-	loginBtn.Resize(newSize)
+	loginBtn.Resize(config.LoginEntrySize)
 	loginBtn.Importance = widget.HighImportance
 
 	// 创建表单布局
@@ -56,14 +56,14 @@ func (w *LoginWindow) setupUI() {
 	)
 
 	// 如果是开发环境，添加离线登录按钮
-	if config2.IsDevelopment() {
+	if config.IsDevelopment() {
 		offlineBtn := widget.NewButton("离线登录", func() {
-			llog.Info("使用离线模式登录")
+			llog.Debug("使用离线模式登录")
 			if w.onLoggedIn != nil {
 				w.onLoggedIn()
 			}
 		})
-		offlineBtn.Resize(newSize)
+		offlineBtn.Resize(config.LoginEntrySize)
 		offlineBtn.Importance = widget.LowImportance
 		form.Add(offlineBtn)
 	}
@@ -71,9 +71,10 @@ func (w *LoginWindow) setupUI() {
 	// 设置窗口内容
 	content := container.NewCenter(form)
 	w.window.SetContent(content)
-	w.window.Resize(config2.WindowSize)
+	w.window.Resize(config.WindowSize)
 	w.window.CenterOnScreen()
 	w.window.SetMaster()
+	w.window.SetFixedSize(true)
 }
 
 // handleLogin 处理登录逻辑
@@ -84,7 +85,8 @@ func (w *LoginWindow) handleLogin(username, password string) {
 	}
 
 	// 验证用户名和密码
-	if username == "root" && password == "123" {
+	code := auth.LoginAuth(username, password)
+	if code == 0 {
 		llog.Info("用户登录成功: %s", username)
 		if w.onLoggedIn != nil {
 			w.onLoggedIn()

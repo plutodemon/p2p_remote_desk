@@ -2,13 +2,14 @@ package capture
 
 import (
 	"fmt"
-	"github.com/kbinani/screenshot"
-	"github.com/nfnt/resize"
 	"image"
 	"image/draw"
 	"image/jpeg"
 	"os"
 	"strconv"
+
+	"github.com/kbinani/screenshot"
+	"github.com/nfnt/resize"
 )
 
 // ScreenCapture 屏幕捕获结构体

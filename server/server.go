@@ -6,10 +6,10 @@ import (
 	"os/signal"
 	"syscall"
 
+	"p2p_remote_desk/lkit"
 	"p2p_remote_desk/server/config"
 	"p2p_remote_desk/server/internal/auth"
 	"p2p_remote_desk/server/internal/signaling"
-	"p2p_remote_desk/server/lkit"
 
 	"github.com/plutodemon/llog"
 )
@@ -35,7 +35,7 @@ func main() {
 	// kill pid 是发送SIGTERM的信号 ; kill -9 pid 是发送SIGKILL的信号(无法捕获)
 	signal.Notify(lkit.SigChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
 
-	// 每个服务都用一个goroutine来运行\
+	// 每个服务都用一个goroutine来运行
 
 	// 验证服务
 	go func() {
