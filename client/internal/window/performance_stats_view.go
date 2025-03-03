@@ -1,4 +1,4 @@
-package ui
+package window
 
 import (
 	"fmt"
@@ -31,8 +31,7 @@ type PerformanceStatsView struct {
 	isVisible   bool
 }
 
-// NewPerformanceStatsView 创建性能监控视图
-func NewPerformanceStatsView() *PerformanceStatsView {
+func newPerformanceStatsView() *PerformanceStatsView {
 	pv := &PerformanceStatsView{
 		monitor: monitor.NewPerformanceMonitor(), // 设置性能监控的更新间隔为1秒
 	}

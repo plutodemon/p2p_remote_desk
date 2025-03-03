@@ -1,80 +1,78 @@
 package internal
 
 import (
+	"fyne.io/fyne/v2/dialog"
 	"p2p_remote_desk/client/config"
 	"p2p_remote_desk/client/internal/window"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
-	"github.com/plutodemon/llog"
 )
 
 // App 应用程序结构体
 type App struct {
 	FyneApp      fyne.App
-	MainWindow   *window.MainWindow
 	LoginWindow  *window.LoginWindow
 	DeviceWindow *window.DeviceWindow
+	MainWindow   *window.MainWindow
 }
 
-// NewApp 创建新的应用程序实例
-func NewApp() *App {
-	return &App{}
+func NewAppAndRun() {
+	newApp := &App{
+		FyneApp: app.NewWithID("remote_desk"),
+	}
+
+	newApp.loginNewAndRun()
+
+	newApp.FyneApp.Run()
 }
 
-// Run 运行应用程序
-func (a *App) Run() {
-	a.FyneApp = app.NewWithID("remote_desk")
+func (a *App) loginNewAndRun() {
+	loginWindow := a.FyneApp.NewWindow("登录")
 
-	// 创建登录窗口
-	loginWindow := a.FyneApp.NewWindow("登录页")
-	a.LoginWindow = window.NewLoginWindow(loginWindow, func() {
+	a.LoginWindow = window.NewLoginWindow(loginWindow, func(userName string) {
 		loginWindow.Hide()
-		a.showDeviceWindow("root")
+		a.deviceNewAndRun(userName)
 	})
 
-	// 显示登录窗口
 	loginWindow.Show()
-	a.FyneApp.Run()
 }
 
-// showDeviceWindow 显示设备管理窗口
-func (a *App) showDeviceWindow(username string) {
+// 设备管理窗口
+func (a *App) deviceNewAndRun(username string) {
 	// 创建设备管理窗口
 	deviceWindow := a.FyneApp.NewWindow("设备管理")
-	deviceWindow.Resize(config.WindowSize)
 
 	// 创建设备管理窗口管理器
-	a.DeviceWindow = window.NewDeviceWindow(deviceWindow, username, func(deviceID string) {
-		deviceWindow.Hide()
-		a.showMainWindow()
+	a.DeviceWindow = window.NewDeviceWindow(deviceWindow, username, func(device *window.DeviceInfo) {
+		a.confirmDialog(device)
 	})
 
 	// 显示设备管理窗口
 	deviceWindow.Show()
-	deviceWindow.CenterOnScreen()
-	deviceWindow.SetMaster()
 }
 
-// showMainWindow 显示主窗口
-func (a *App) showMainWindow() {
+// 确认连接dialog
+func (a *App) confirmDialog(device *window.DeviceInfo) {
+	confirm := dialog.NewConfirm("连接确认", "是否连接到设备: "+device.Name, func(flag bool) {
+		if flag {
+			a.DeviceWindow.Window.Hide()
+			a.mainNewAndRun(device)
+		}
+	}, a.DeviceWindow.Window)
+	confirm.SetConfirmText("连接")
+	confirm.SetDismissText("取消")
+	confirm.Resize(config.DialogSize)
+	confirm.Show()
+}
+
+func (a *App) mainNewAndRun(device *window.DeviceInfo) {
 	// 创建主窗口
-	mainWindow := a.FyneApp.NewWindow("远程桌面")
-	mainWindow.Resize(config.WindowSize)
+	mainWindow := a.FyneApp.NewWindow("远程桌面: " + device.Name)
 
 	// 创建主窗口管理器
 	a.MainWindow = window.NewMainWindow(mainWindow)
 
 	// 显示主窗口
 	mainWindow.Show()
-	mainWindow.CenterOnScreen()
-	mainWindow.SetMaster()
-}
-
-// Cleanup 清理资源
-func (a *App) Cleanup() {
-	if a.MainWindow != nil {
-		a.MainWindow.Cleanup()
-	}
-	llog.Cleanup()
 }

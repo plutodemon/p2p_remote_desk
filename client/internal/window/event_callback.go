@@ -2,19 +2,34 @@ package window
 
 import (
 	"fmt"
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/widget"
 	"strconv"
+	"time"
 
 	"github.com/plutodemon/llog"
 	"p2p_remote_desk/client/config"
 )
 
+func ShowError(window fyne.Window, message string) {
+	dialog := widget.NewLabel(message)
+	popup := widget.NewModalPopUp(dialog, window.Canvas())
+	popup.Show()
+
+	// 2秒后自动关闭错误提示
+	go func() {
+		time.Sleep(2 * time.Second)
+		popup.Hide()
+	}()
+}
+
 // 菜单事件处理函数
 func (w *MainWindow) onConnectClick() {
 	if w.isConnected {
 		// 断开连接
-		w.mainUI.SetStatus("已断开连接")
+		w.SetStatus("已断开连接")
 		w.isConnected = false
-		w.mainUI.StopCapture()
+		w.StopCapture()
 		return
 	}
 
@@ -25,13 +40,13 @@ func (w *MainWindow) handleControllerConnect() {
 	//cfg := config.GetConfig()
 	//serverAddr := cfg.ServerConfig.Address + ":" + cfg.ServerConfig.Port
 
-	w.mainUI.SetStatus("正在连接...")
+	w.SetStatus("正在连接...")
 
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
 				llog.Error("连接过程发生panic: %v", r)
-				w.mainUI.SetStatus("连接异常")
+				w.SetStatus("连接异常")
 			}
 		}()
 
@@ -42,16 +57,16 @@ func (w *MainWindow) handleControllerConnect() {
 		//	return
 		//}
 
-		w.mainUI.SetStatus("已连接")
+		w.SetStatus("已连接")
 		w.isConnected = true
-		w.mainUI.StartCapture()
+		w.StartCapture()
 	}()
 }
 
 func (w *MainWindow) onFullScreenClick() {
 	if w.isFullScreen {
 		// 退出全屏
-		w.window.SetFullScreen(false)
+		w.Window.SetFullScreen(false)
 
 		// 更新菜单项文本
 		for _, item := range w.mainMenu.Items[1].Items {
@@ -62,11 +77,11 @@ func (w *MainWindow) onFullScreenClick() {
 		}
 
 		// 性能监控
-		w.mainUI.PerfStats().Hide()
+		w.perfStats.Hide()
 		w.isShowStats = false
 	} else {
 		// 进入全屏
-		w.window.SetFullScreen(true)
+		w.Window.SetFullScreen(true)
 
 		// 更新菜单项文本
 		for _, item := range w.mainMenu.Items[1].Items {
@@ -78,20 +93,19 @@ func (w *MainWindow) onFullScreenClick() {
 	}
 
 	// 性能监控
-	w.mainUI.PerfStats().Hide()
+	w.perfStats.Hide()
 	w.isShowStats = false
 
 	w.isFullScreen = !w.isFullScreen
 }
 
 func (w *MainWindow) onDisplayChanged(s string) {
-	// 设置屏幕捕获的显示器索引
-	w.mainUI.SetDisplayIndex(s)
+	w.SetDisplayIndex(s)
 }
 
 func (w *MainWindow) togglePerformanceStats() {
 	if w.isShowStats {
-		w.mainUI.PerfStats().Hide()
+		w.perfStats.Hide()
 
 		// 更新菜单项文本
 		for _, item := range w.mainMenu.Items[1].Items {
@@ -101,7 +115,7 @@ func (w *MainWindow) togglePerformanceStats() {
 			}
 		}
 	} else {
-		w.mainUI.PerfStats().Show()
+		w.perfStats.Show()
 
 		// 更新菜单项文本
 		for _, item := range w.mainMenu.Items[1].Items {
@@ -115,7 +129,7 @@ func (w *MainWindow) togglePerformanceStats() {
 }
 
 func (w *MainWindow) onQualityChanged(s string) {
-	w.mainUI.SetQuality(s)
+	w.SetQuality(s)
 }
 
 func (w *MainWindow) onFPSChanged(s string) {
@@ -125,20 +139,14 @@ func (w *MainWindow) onFPSChanged(s string) {
 		return
 	}
 
-	w.mainUI.SetStatus(fmt.Sprintf("已设置帧率: %s", s))
+	w.SetStatus(fmt.Sprintf("已设置帧率: %s", s))
 
 	if w.isConnected {
-		w.mainUI.StopCapture()
-		w.mainUI.StartCapture()
+		w.StopCapture()
+		w.StartCapture()
 	}
 }
 
-func (w *MainWindow) onModeChanged() {
-	if w.isController {
-		w.mainUI.SetStatus(config.ControlledEnd)
-	} else {
-		w.mainUI.SetStatus(config.ControlEnd)
-	}
-
-	w.isController = !w.isController
+func (w *MainWindow) onSettingChanged(setting string) {
+	w.statusBar = setting
 }

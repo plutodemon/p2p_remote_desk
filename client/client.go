@@ -34,7 +34,5 @@ func main() {
 	}
 	defer glfw.Terminate()
 
-	// 初始化并运行应用
-	newApp := internal.NewApp()
-	newApp.Run()
+	internal.NewAppAndRun()
 }

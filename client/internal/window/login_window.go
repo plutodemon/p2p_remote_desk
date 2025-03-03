@@ -1,8 +1,6 @@
 package window
 
 import (
-	"time"
-
 	"p2p_remote_desk/client/config"
 	"p2p_remote_desk/client/internal/network/auth"
 
@@ -12,16 +10,14 @@ import (
 	"github.com/plutodemon/llog"
 )
 
-// LoginWindow 登录窗口管理器
 type LoginWindow struct {
-	window     fyne.Window
-	onLoggedIn func()
+	Window     fyne.Window
+	onLoggedIn func(userName string)
 }
 
-// NewLoginWindow 创建登录窗口管理器
-func NewLoginWindow(window fyne.Window, onLoggedIn func()) *LoginWindow {
+func NewLoginWindow(window fyne.Window, onLoggedIn func(userName string)) *LoginWindow {
 	w := &LoginWindow{
-		window:     window,
+		Window:     window,
 		onLoggedIn: onLoggedIn,
 	}
 
@@ -30,7 +26,6 @@ func NewLoginWindow(window fyne.Window, onLoggedIn func()) *LoginWindow {
 	return w
 }
 
-// setupUI 设置登录界面
 func (w *LoginWindow) setupUI() {
 	usernameEntry := widget.NewEntry()
 	usernameEntry.SetPlaceHolder("用户名")
@@ -40,15 +35,14 @@ func (w *LoginWindow) setupUI() {
 	passwordEntry.SetPlaceHolder("密码")
 	passwordEntry.Resize(config.LoginEntrySize)
 
-	// 创建登录按钮
 	loginBtn := widget.NewButton("登录", func() {
 		w.handleLogin(usernameEntry.Text, passwordEntry.Text)
 	})
-	loginBtn.Resize(config.LoginEntrySize)
 	loginBtn.Importance = widget.HighImportance
+	loginBtn.Resize(config.LoginButtonSize)
+	loginBtn.Refresh()
 
-	// 创建表单布局
-	form := container.NewVBox(
+	vBox := container.NewVBox(
 		widget.NewLabel("远程桌面登录"),
 		usernameEntry,
 		passwordEntry,
@@ -60,27 +54,26 @@ func (w *LoginWindow) setupUI() {
 		offlineBtn := widget.NewButton("离线登录", func() {
 			llog.Debug("使用离线模式登录")
 			if w.onLoggedIn != nil {
-				w.onLoggedIn()
+				w.onLoggedIn("离线模式")
 			}
 		})
-		offlineBtn.Resize(config.LoginEntrySize)
+		offlineBtn.Resize(config.LoginButtonSize)
 		offlineBtn.Importance = widget.LowImportance
-		form.Add(offlineBtn)
+		vBox.Add(offlineBtn)
 	}
 
 	// 设置窗口内容
-	content := container.NewCenter(form)
-	w.window.SetContent(content)
-	w.window.Resize(config.WindowSize)
-	w.window.CenterOnScreen()
-	w.window.SetMaster()
-	w.window.SetFixedSize(true)
+	content := container.NewCenter(vBox)
+	w.Window.SetContent(content)
+	w.Window.Resize(config.WindowSize)
+	w.Window.CenterOnScreen()
+	w.Window.SetMaster()
+	w.Window.SetFixedSize(true)
 }
 
-// handleLogin 处理登录逻辑
 func (w *LoginWindow) handleLogin(username, password string) {
 	if username == "" || password == "" {
-		w.showError("用户名和密码不能为空")
+		ShowError(w.Window, "用户名和密码不能为空")
 		return
 	}
 
@@ -89,22 +82,9 @@ func (w *LoginWindow) handleLogin(username, password string) {
 	if code == 0 {
 		llog.Info("用户登录成功: %s", username)
 		if w.onLoggedIn != nil {
-			w.onLoggedIn()
+			w.onLoggedIn(username)
 		}
 	} else {
-		w.showError("用户名或密码错误")
+		ShowError(w.Window, "用户名或密码错误")
 	}
-}
-
-// showError 显示错误信息
-func (w *LoginWindow) showError(message string) {
-	dialog := widget.NewLabel(message)
-	popup := widget.NewModalPopUp(dialog, w.window.Canvas())
-	popup.Show()
-
-	// 2秒后自动关闭错误提示
-	go func() {
-		time.Sleep(2 * time.Second)
-		popup.Hide()
-	}()
 }

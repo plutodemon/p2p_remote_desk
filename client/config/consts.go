@@ -25,11 +25,17 @@ const (
 
 	FullScreen     = "全屏"
 	ExitFullScreen = "退出全屏"
+
+	Normal       = "普通"
+	NetworkDelay = "网络延迟"
+	FPS          = "帧率"
 )
 
 var ToolbarSize = fyne.NewSize(ToolbarItemWide, ToolbarItemHigh)
 var ToolbarItemSize = fyne.NewSize(ToolbarItemWide, ToolbarItemHigh)
-var LoginEntrySize = fyne.NewSize(200, 40)
+var LoginEntrySize = fyne.NewSize(320, 40)
+var LoginButtonSize = fyne.NewSize(200, 40)
+var DialogSize = fyne.NewSize(420, 160)
 
 const (
 	ToolbarItemWide = 10
