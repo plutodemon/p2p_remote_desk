@@ -1,12 +1,13 @@
 package signaling
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
 	"sync"
 
-	"github.com/gorilla/websocket"
+	"github.com/coder/websocket"
 )
 
 // 客户端注册表
@@ -19,10 +20,6 @@ var (
 	clients   = make(map[string]*Client) // 已注册的客户端
 	clientsMu sync.Mutex                 // 客户端注册表锁
 )
-
-var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool { return true }, // 允许跨域
-}
 
 // 信令消息格式
 type SignalMessage struct {
@@ -39,17 +36,19 @@ func Start() {
 }
 
 func handleWebSocket(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
+	conn, err := websocket.Accept(w, r, nil)
 	if err != nil {
 		log.Printf("WebSocket升级失败: %v", err)
 		return
 	}
-	defer conn.Close()
+	defer conn.Close(websocket.StatusNormalClosure, "")
+
+	ctx := context.Background()
 
 	// 等待客户端注册
 	var clientID string
 	for {
-		_, msg, err := conn.ReadMessage()
+		_, msg, err := conn.Read(ctx)
 		if err != nil {
 			log.Printf("读取注册消息失败: %v", err)
 			return
@@ -76,8 +75,8 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	// 监听客户端消息并转发
 	for {
-		var msg SignalMessage
-		if err := conn.ReadJSON(&msg); err != nil {
+		_, msgBytes, err := conn.Read(ctx)
+		if err != nil {
 			log.Printf("客户端 %s 断开连接: %v", clientID, err)
 			clientsMu.Lock()
 			delete(clients, clientID)
@@ -85,12 +84,23 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		var msg SignalMessage
+		if err := json.Unmarshal(msgBytes, &msg); err != nil {
+			log.Printf("解析消息失败: %v", err)
+			continue
+		}
+
 		// 转发消息到目标客户端
 		clientsMu.Lock()
 		targetClient, exists := clients[msg.To]
 		clientsMu.Unlock()
 		if exists {
-			if err := targetClient.conn.WriteJSON(msg); err != nil {
+			msgBytes, err := json.Marshal(msg)
+			if err != nil {
+				log.Printf("序列化消息失败: %v", err)
+				continue
+			}
+			if err := targetClient.conn.Write(ctx, websocket.MessageText, msgBytes); err != nil {
 				log.Printf("转发消息到 %s 失败: %v", msg.To, err)
 			}
 		} else {
