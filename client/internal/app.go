@@ -9,7 +9,6 @@ import (
 	"fyne.io/fyne/v2/app"
 )
 
-// App 应用程序结构体
 type App struct {
 	FyneApp      fyne.App
 	LoginWindow  *window.LoginWindow
@@ -38,7 +37,6 @@ func (a *App) loginNewAndRun() {
 	loginWindow.Show()
 }
 
-// 设备管理窗口
 func (a *App) deviceNewAndRun(username string) {
 	// 创建设备管理窗口
 	deviceWindow := a.FyneApp.NewWindow("设备管理")
@@ -52,7 +50,6 @@ func (a *App) deviceNewAndRun(username string) {
 	deviceWindow.Show()
 }
 
-// 确认连接dialog
 func (a *App) confirmDialog(device *window.DeviceInfo) {
 	confirm := dialog.NewConfirm("连接确认", "是否连接到设备: "+device.Name, func(flag bool) {
 		if flag {
@@ -72,6 +69,8 @@ func (a *App) mainNewAndRun(device *window.DeviceInfo) {
 
 	// 创建主窗口管理器
 	a.MainWindow = window.NewMainWindow(mainWindow)
+
+	a.MainWindow.OnConnectClick()
 
 	// 显示主窗口
 	mainWindow.Show()

@@ -51,11 +51,6 @@ func NewMainWindow(window fyne.Window) *MainWindow {
 }
 
 func (w *MainWindow) setupMainMenu() {
-	// todo 换为弹窗确认
-	//connectMenu := fyne.NewMenu("连接",
-	//	fyne.NewMenuItem(config.ConnectBtnNameOpen, w.onConnectClick),
-	//)
-
 	// 视图菜单
 	viewMenu := fyne.NewMenu("视图",
 		fyne.NewMenuItem(config.FullScreen, w.onFullScreenClick),
@@ -76,9 +71,7 @@ func (w *MainWindow) setupMainMenu() {
 	}
 
 	setting := fyne.NewMenu("状态监控",
-		fyne.NewMenuItem(config.Normal, func() { w.onSettingChanged(config.Normal) }),
-		fyne.NewMenuItem(config.NetworkDelay, func() { w.onSettingChanged(config.NetworkDelay) }),
-		fyne.NewMenuItem(config.FPS, func() { w.onSettingChanged(config.FPS) }),
+		fyne.NewMenuItem(config.RestoreDefault, w.onSettingChanged),
 	)
 
 	// 创建主菜单
@@ -116,11 +109,9 @@ func (w *MainWindow) setupUI() {
 }
 
 func (w *MainWindow) SetStatus(status string) {
-	switch w.statusBar {
-	case config.NetworkDelay:
-		w.mainMenu.Items[3].Label = config.NetworkDelay + ":" + status
-	case config.FPS:
-		w.mainMenu.Items[3].Label = config.FPS + ":" + status
+	switch w.mainMenu.Items[3].Items[0].Label {
+	case config.RestoreDefault:
+		return
 	default:
 		w.mainMenu.Items[3].Label = status
 	}
@@ -146,10 +137,10 @@ func (w *MainWindow) Cleanup() {
 }
 
 func (w *MainWindow) SetFPS(fps float64) {
-	if w.statusBar != config.FPS {
-		return
-	}
-	w.SetStatus(fmt.Sprintf("%.1f", fps))
+	//if w.statusBar != config.FPS {
+	//	return
+	//}
+	//w.SetStatus(fmt.Sprintf("%.1f", fps))
 }
 
 // SetQuality 设置画面质量

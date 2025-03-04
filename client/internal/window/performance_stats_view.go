@@ -16,19 +16,26 @@ type PerformanceStatsView struct {
 	container *fyne.Container
 
 	// 性能指标显示
-	uptimeLabel      *widget.Label
-	fpsLabel         *widget.Label
-	cpuUsageLabel    *widget.Label
+	// 运行时间
+	uptimeLabel *widget.Label
+	// 帧率
+	fpsLabel *widget.Label
+	// CPU使用率
+	cpuUsageLabel *widget.Label
+	// 内存使用量
 	memoryUsageLabel *widget.Label
-	latencyLabel     *widget.Label
-	goroutineLabel   *widget.Label
+	// 网络延迟
+	latencyLabel *widget.Label
+	// Goroutine数量
+	goroutineLabel *widget.Label
 
 	// 性能监控器
 	monitor *monitor.PerformanceMonitor
 
 	// 更新定时器
 	updateTimer *time.Timer
-	isVisible   bool
+	// 是否可见
+	isVisible bool
 }
 
 func newPerformanceStatsView() *PerformanceStatsView {

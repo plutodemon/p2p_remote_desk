@@ -23,8 +23,7 @@ func ShowError(window fyne.Window, message string) {
 	}()
 }
 
-// 菜单事件处理函数
-func (w *MainWindow) onConnectClick() {
+func (w *MainWindow) OnConnectClick() {
 	if w.isConnected {
 		// 断开连接
 		w.SetStatus("已断开连接")
@@ -64,38 +63,24 @@ func (w *MainWindow) handleControllerConnect() {
 }
 
 func (w *MainWindow) onFullScreenClick() {
-	if w.isFullScreen {
-		// 退出全屏
-		w.Window.SetFullScreen(false)
+	defer func() {
+		w.Window.SetFullScreen(w.isFullScreen)
+	}()
 
-		// 更新菜单项文本
-		for _, item := range w.mainMenu.Items[1].Items {
-			if item.Label == config.ExitFullScreen {
-				item.Label = config.FullScreen
-				break
-			}
+	for _, item := range w.mainMenu.Items[0].Items {
+		if item.Label == config.FullScreen {
+			item.Label = config.ExitFullScreen
+			break
 		}
-
-		// 性能监控
-		w.perfStats.Hide()
-		w.isShowStats = false
-	} else {
-		// 进入全屏
-		w.Window.SetFullScreen(true)
-
-		// 更新菜单项文本
-		for _, item := range w.mainMenu.Items[1].Items {
-			if item.Label == config.FullScreen {
-				item.Label = config.ExitFullScreen
-				break
-			}
+		if item.Label == config.ExitFullScreen {
+			item.Label = config.FullScreen
+			break
 		}
 	}
+	w.mainMenu.Items[0].Refresh()
 
-	// 性能监控
 	w.perfStats.Hide()
 	w.isShowStats = false
-
 	w.isFullScreen = !w.isFullScreen
 }
 
@@ -106,25 +91,21 @@ func (w *MainWindow) onDisplayChanged(s string) {
 func (w *MainWindow) togglePerformanceStats() {
 	if w.isShowStats {
 		w.perfStats.Hide()
-
-		// 更新菜单项文本
-		for _, item := range w.mainMenu.Items[1].Items {
-			if item.Label == config.HiddenPerfStats {
-				item.Label = config.ShowPerfStats
-				break
-			}
-		}
 	} else {
 		w.perfStats.Show()
-
-		// 更新菜单项文本
-		for _, item := range w.mainMenu.Items[1].Items {
-			if item.Label == config.ShowPerfStats {
-				item.Label = config.HiddenPerfStats
-				break
-			}
+	}
+	for _, item := range w.mainMenu.Items[0].Items {
+		if item.Label == config.ShowPerfStats {
+			item.Label = config.HiddenPerfStats
+			break
+		}
+		if item.Label == config.HiddenPerfStats {
+			item.Label = config.ShowPerfStats
+			break
 		}
 	}
+	w.mainMenu.Items[0].Refresh()
+
 	w.isShowStats = !w.isShowStats
 }
 
@@ -147,6 +128,17 @@ func (w *MainWindow) onFPSChanged(s string) {
 	}
 }
 
-func (w *MainWindow) onSettingChanged(setting string) {
-	w.statusBar = setting
+func (w *MainWindow) onSettingChanged() {
+	for _, item := range w.mainMenu.Items[3].Items {
+		if item.Label == config.RestoreDefault {
+			item.Label = config.RestoreNormal
+			w.mainMenu.Items[3].Label = "状态监控"
+			break
+		}
+		if item.Label == config.RestoreNormal {
+			item.Label = config.RestoreDefault
+			break
+		}
+	}
+	w.mainMenu.Items[3].Refresh()
 }

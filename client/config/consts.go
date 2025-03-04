@@ -26,9 +26,8 @@ const (
 	FullScreen     = "全屏"
 	ExitFullScreen = "退出全屏"
 
-	Normal       = "普通"
-	NetworkDelay = "网络延迟"
-	FPS          = "帧率"
+	RestoreDefault = "恢复默认"
+	RestoreNormal  = "恢复普通"
 )
 
 var ToolbarSize = fyne.NewSize(ToolbarItemWide, ToolbarItemHigh)
