@@ -3,108 +3,125 @@ package signaling
 import (
 	"context"
 	"encoding/json"
-	"log"
-	"net/http"
-	"sync"
-
 	"github.com/coder/websocket"
+	"github.com/plutodemon/llog"
+	"net/http"
+	"p2p_remote_desk/common"
+	"p2p_remote_desk/lkit"
+	"p2p_remote_desk/server/config"
+	"sync"
+	"syscall"
 )
 
-// 客户端注册表
 type Client struct {
-	conn *websocket.Conn
-	id   string
+	Id   string
+	Conn *websocket.Conn
 }
 
-var (
-	clients   = make(map[string]*Client) // 已注册的客户端
-	clientsMu sync.Mutex                 // 客户端注册表锁
-)
+type ClientsInfo struct {
+	Clients   map[string]*Client // 已注册的客户端
+	clientsMu sync.Mutex         // 客户端注册表锁
+}
 
-// 信令消息格式
-type SignalMessage struct {
-	From    string      `json:"from"`    // 发送方ID
-	To      string      `json:"to"`      // 接收方ID
-	Type    string      `json:"type"`    // 消息类型（offer/answer/candidate）
-	Payload interface{} `json:"payload"` // 消息内容（SDP或Candidate）
+func (c *ClientsInfo) AddClient(client *Client) {
+	c.clientsMu.Lock()
+	c.Clients[client.Id] = client
+	c.clientsMu.Unlock()
+	llog.InfoF("客户端[ %s ]已注册", client.Id)
+}
+
+func (c *ClientsInfo) RemoveClient(clientID string) {
+	c.clientsMu.Lock()
+	delete(c.Clients, clientID)
+	c.clientsMu.Unlock()
+	llog.InfoF("客户端[ %s ]已注销", clientID)
+}
+
+func (c *ClientsInfo) GetClient(clientID string) (*Client, bool) {
+	c.clientsMu.Lock()
+	defer c.clientsMu.Unlock()
+	if _, ok := c.Clients[clientID]; ok {
+		return c.Clients[clientID], true
+	}
+	return nil, false
+}
+
+var SignalClients = &ClientsInfo{
+	Clients:   make(map[string]*Client),
+	clientsMu: sync.Mutex{},
 }
 
 func Start() {
-	http.HandleFunc("/ws", handleWebSocket)
-	log.Println("信令服务器启动，监听 :8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	http.HandleFunc("/signaling", handleSignaling)
+
+	cfg := config.GetConfig()
+	add := lkit.GetAddr(cfg.Server.Host, cfg.Server.SignalPort)
+
+	err := http.ListenAndServe(add, nil)
+	if err != nil {
+		llog.Error("start handleSignaling error:", err)
+		lkit.SigChan <- syscall.SIGTERM
+		return
+	}
+
+	llog.Info("信令服务器启动, 地址:", add)
 }
 
-func handleWebSocket(w http.ResponseWriter, r *http.Request) {
+func handleSignaling(w http.ResponseWriter, r *http.Request) {
 	conn, err := websocket.Accept(w, r, nil)
 	if err != nil {
-		log.Printf("WebSocket升级失败: %v", err)
+		llog.Warn("WebSocket升级失败:", err)
 		return
 	}
 	defer conn.Close(websocket.StatusNormalClosure, "")
 
 	ctx := context.Background()
-
-	// 等待客户端注册
 	var clientID string
 	for {
 		_, msg, err := conn.Read(ctx)
 		if err != nil {
-			log.Printf("读取注册消息失败: %v", err)
+			llog.Warn("读取注册消息失败:", err)
 			return
 		}
 
-		var reg struct {
-			Action string `json:"action"`
-			ID     string `json:"id"`
-		}
+		reg := common.SignalReg
 		if err := json.Unmarshal(msg, &reg); err != nil {
-			log.Printf("解析注册消息失败: %v", err)
+			llog.Warn("解析注册消息失败:", err)
 			continue
 		}
 
-		if reg.Action == "register" && reg.ID != "" {
+		if reg.Action == common.SignalRegActionRegister && reg.ID != "" {
 			clientID = reg.ID
-			clientsMu.Lock()
-			clients[clientID] = &Client{conn: conn, id: clientID}
-			clientsMu.Unlock()
-			log.Printf("客户端 %s 已注册", clientID)
+			SignalClients.AddClient(&Client{Id: clientID, Conn: conn})
 			break
 		}
 	}
 
-	// 监听客户端消息并转发
 	for {
 		_, msgBytes, err := conn.Read(ctx)
 		if err != nil {
-			log.Printf("客户端 %s 断开连接: %v", clientID, err)
-			clientsMu.Lock()
-			delete(clients, clientID)
-			clientsMu.Unlock()
+			llog.WarnF("客户端[ %s ]断开连接:", clientID, err)
 			return
 		}
 
-		var msg SignalMessage
+		var msg common.SignalMessage
 		if err := json.Unmarshal(msgBytes, &msg); err != nil {
-			log.Printf("解析消息失败: %v", err)
+			llog.Warn("解析消息失败:", err)
 			continue
 		}
 
-		// 转发消息到目标客户端
-		clientsMu.Lock()
-		targetClient, exists := clients[msg.To]
-		clientsMu.Unlock()
+		targetClient, exists := SignalClients.GetClient(msg.To)
 		if exists {
-			msgBytes, err := json.Marshal(msg)
+			msgBytes, err = json.Marshal(msg)
 			if err != nil {
-				log.Printf("序列化消息失败: %v", err)
+				llog.Warn("序列化消息失败:", err)
 				continue
 			}
-			if err := targetClient.conn.Write(ctx, websocket.MessageText, msgBytes); err != nil {
-				log.Printf("转发消息到 %s 失败: %v", msg.To, err)
+			if err := targetClient.Conn.Write(ctx, websocket.MessageText, msgBytes); err != nil {
+				llog.WarnF("转发消息到[ %s ]失败:", msg.To, err)
 			}
 		} else {
-			log.Printf("目标客户端 %s 不存在", msg.To)
+			llog.Warn("目标客户端[ %s ]不存在", msg.To)
 		}
 	}
 }

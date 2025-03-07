@@ -9,7 +9,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/gorilla/websocket"
+	"github.com/coder/websocket"
 )
 
 func Test_NatDetector(t *testing.T) {
@@ -61,17 +61,12 @@ type Room struct {
 }
 
 var (
-	upgrader = websocket.Upgrader{
-		CheckOrigin: func(r *http.Request) bool {
-			return true
-		},
-	}
 	rooms  = make(map[string]*Room)
 	roomMu sync.Mutex
 )
 
 func handleWebSocket(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
+	conn, err := websocket.Accept(w, r, nil)
 	if err != nil {
 		log.Println("Error upgrading to WebSocket:", err)
 		return
