@@ -3,14 +3,16 @@ package signaling
 import (
 	"context"
 	"encoding/json"
-	"github.com/coder/websocket"
-	"github.com/plutodemon/llog"
 	"net/http"
+	"sync"
+	"syscall"
+
 	"p2p_remote_desk/common"
 	"p2p_remote_desk/lkit"
 	"p2p_remote_desk/server/config"
-	"sync"
-	"syscall"
+
+	"github.com/coder/websocket"
+	"github.com/plutodemon/llog"
 )
 
 type Client struct {
@@ -40,8 +42,8 @@ func (c *ClientsInfo) RemoveClient(clientID string) {
 func (c *ClientsInfo) GetClient(clientID string) (*Client, bool) {
 	c.clientsMu.Lock()
 	defer c.clientsMu.Unlock()
-	if _, ok := c.Clients[clientID]; ok {
-		return c.Clients[clientID], true
+	if client, ok := c.Clients[clientID]; ok {
+		return client, true
 	}
 	return nil, false
 }
@@ -73,7 +75,7 @@ func handleSignaling(w http.ResponseWriter, r *http.Request) {
 		llog.Warn("WebSocket升级失败:", err)
 		return
 	}
-	defer conn.Close(websocket.StatusNormalClosure, "")
+	defer conn.CloseNow()
 
 	ctx := context.Background()
 	var clientID string
