@@ -124,7 +124,7 @@ func startSendMessages(ctx context.Context, conn *websocket.Conn, reader *bufio.
 func main() {
 	// 连接信令服务器
 	ctx := context.Background()
-	conn, _, err := websocket.Dial(ctx, "ws://localhost:8081/ws", nil)
+	conn, _, err := websocket.Dial(ctx, "ws://localhost:8081/signaling", nil)
 	if err != nil {
 		log.Fatal("连接服务器失败:", err)
 	}

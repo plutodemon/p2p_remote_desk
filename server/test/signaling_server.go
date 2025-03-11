@@ -3,7 +3,11 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
+	"os"
+	"os/signal"
 	"sync"
 	"sync/atomic"
 	"syscall"
@@ -57,7 +61,7 @@ func (c *ClientsInfo) AddClient(client *Client) bool {
 
 	// 增加活跃连接计数
 	atomic.AddInt32(&c.activeConns, 1)
-	llog.InfoF("客户端[ %s ]已注册，当前连接数: %d", client.Id, atomic.LoadInt32(&c.activeConns))
+	llog.InfoF("客户端 %s 已注册，当前连接数: %d", client.Id, atomic.LoadInt32(&c.activeConns))
 	return true
 }
 
@@ -70,7 +74,7 @@ func (c *ClientsInfo) RemoveClient(clientID string) {
 
 		// 减少活跃连接计数
 		atomic.AddInt32(&c.activeConns, -1)
-		llog.InfoF("客户端[ %s ]已注销，当前连接数: %d", clientID, atomic.LoadInt32(&c.activeConns))
+		llog.InfoF("客户端 %s 已注销，当前连接数: %d", clientID, atomic.LoadInt32(&c.activeConns))
 	} else {
 		c.clientsMu.Unlock()
 	}
@@ -143,8 +147,58 @@ func cleanupInactiveConnections() {
 }
 
 func main() {
-	// 初始化goroutine池
-	pool, err := ants.NewPool(SignalClients.config.GoroutinePoolSize)
+	// 初始化配置
+	if err := config.Init(); err != nil {
+		fmt.Printf("初始化配置失败: %v\n", err)
+		os.Exit(1)
+	}
+
+	// 初始化日志系统
+	if err := llog.Init(config.GetConfig().LogConfig); err != nil {
+		fmt.Printf("初始化日志系统失败: %v\n", err)
+		os.Exit(1)
+	}
+	defer llog.Cleanup()
+
+	// 设置全局panic处理
+	defer llog.HandlePanic()
+
+	// 注册要接收的信号
+	// kill pid 是发送SIGTERM的信号 ; kill -9 pid 是发送SIGKILL的信号(无法捕获)
+	signal.Notify(lkit.SigChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
+
+	go func() {
+		start()
+	}()
+
+	// 主goroutine等待信号 一直阻塞
+	select {
+	case sig := <-lkit.SigChan:
+		switch sig {
+		case syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT:
+			llog.Info("收到退出信号: ", sig)
+			// todo 执行清理操作
+			return
+		default:
+			llog.Info("收到未知信号: ", sig)
+		}
+	}
+}
+
+func start() {
+	// 下面是信令服务器的启动代码
+
+	// 初始化goroutine池，设置一些高级选项
+	poolOptions := ants.Options{
+		ExpiryDuration:   10 * time.Minute, // 空闲worker的过期时间
+		PreAlloc:         true,             // 预分配goroutine队列内存
+		MaxBlockingTasks: 1000,             // 最大阻塞任务数
+		Nonblocking:      false,            // 设置为true时，当池满时Submit会返回ErrPoolOverload错误
+		PanicHandler: func(p interface{}) {
+			llog.Error("协程池处理任务时发生panic:", p)
+		},
+	}
+	pool, err := ants.NewPool(SignalClients.config.GoroutinePoolSize, ants.WithOptions(poolOptions))
 	if err != nil {
 		llog.Error("创建goroutine池失败:", err)
 		lkit.SigChan <- syscall.SIGTERM
@@ -156,15 +210,50 @@ func main() {
 	startCleanupRoutine()
 
 	http.HandleFunc("/signaling", func(w http.ResponseWriter, r *http.Request) {
-		// 使用协程池处理新连接
-		pool.Submit(func() {
-			handleSignaling(w, r)
-		})
+		// 检查当前连接数是否超过限制
+		if SignalClients.config.MaxConnections > 0 && atomic.LoadInt32(&SignalClients.activeConns) >=
+			int32(SignalClients.config.MaxConnections) {
+			llog.Warn("达到最大连接数限制，拒绝新连接")
+			w.WriteHeader(http.StatusServiceUnavailable)
+			return
+		}
+
+		// 使用协程池处理WebSocket连接
+		conn, err := websocket.Accept(w, r, nil)
+		if err != nil {
+			llog.Warn("WebSocket升级失败:", err)
+			return
+		}
+
+		// 提交任务到协程池，使用重试机制
+		var submitted bool
+		for retries := 0; retries < 3; retries++ {
+			err = pool.Submit(func() {
+				handleWebSocketConn(conn)
+			})
+
+			if err == nil {
+				submitted = true
+				break
+			}
+
+			if errors.Is(err, ants.ErrPoolOverload) {
+				llog.Warn("协程池已满，等待重试...")
+				time.Sleep(100 * time.Millisecond) // 短暂等待后重试
+			} else {
+				break // 其他错误直接退出
+			}
+		}
+
+		if !submitted {
+			llog.Warn("提交任务到协程池失败:", err)
+			conn.CloseNow()
+			return
+		}
 	})
 
 	cfg := config.GetConfig()
 	add := lkit.GetAddr(cfg.Server.Host, cfg.Server.SignalPort)
-
 	llog.Info("信令服务器启动, 地址:", add, "，最大连接数:", SignalClients.config.MaxConnections)
 
 	err = http.ListenAndServe(add, nil)
@@ -175,12 +264,8 @@ func main() {
 	}
 }
 
-func handleSignaling(w http.ResponseWriter, r *http.Request) {
-	conn, err := websocket.Accept(w, r, nil)
-	if err != nil {
-		llog.Warn("WebSocket升级失败:", err)
-		return
-	}
+// 处理WebSocket连接的函数，由协程池调用
+func handleWebSocketConn(conn *websocket.Conn) {
 	defer conn.CloseNow()
 
 	// 创建一个带30秒超时的上下文用于客户端注册
@@ -226,7 +311,6 @@ func handleSignaling(w http.ResponseWriter, r *http.Request) {
 		if !success {
 			return
 		}
-		llog.InfoF("客户端[ %s ]注册成功", clientID)
 	case <-ctx.Done():
 		llog.Warn("客户端注册超时")
 		return
