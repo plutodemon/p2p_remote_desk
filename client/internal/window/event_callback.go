@@ -2,13 +2,14 @@ package window
 
 import (
 	"fmt"
-	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/widget"
 	"strconv"
 	"time"
 
-	"github.com/plutodemon/llog"
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/widget"
+
 	"p2p_remote_desk/client/config"
+	"p2p_remote_desk/llog"
 )
 
 func ShowError(window fyne.Window, message string) {

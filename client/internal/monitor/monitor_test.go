@@ -2,13 +2,14 @@ package monitor
 
 import (
 	"fmt"
-	"github.com/shirou/gopsutil/cpu"
-	"github.com/shirou/gopsutil/mem"
-	"github.com/shirou/gopsutil/process"
 	"log"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/shirou/gopsutil/cpu"
+	"github.com/shirou/gopsutil/mem"
+	"github.com/shirou/gopsutil/process"
 )
 
 func Test_Monitor(t *testing.T) {

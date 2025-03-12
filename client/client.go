@@ -6,9 +6,9 @@ import (
 
 	"p2p_remote_desk/client/config"
 	"p2p_remote_desk/client/internal"
+	"p2p_remote_desk/llog"
 
 	"github.com/go-gl/glfw/v3.3/glfw"
-	"github.com/plutodemon/llog"
 )
 
 func main() {

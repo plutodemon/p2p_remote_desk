@@ -3,11 +3,11 @@ package window
 import (
 	"p2p_remote_desk/client/config"
 	"p2p_remote_desk/client/internal/network/auth"
+	"p2p_remote_desk/llog"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
-	"github.com/plutodemon/llog"
 )
 
 type LoginWindow struct {

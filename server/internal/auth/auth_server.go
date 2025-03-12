@@ -7,9 +7,9 @@ import (
 
 	"p2p_remote_desk/common"
 	"p2p_remote_desk/lkit"
+	"p2p_remote_desk/llog"
 	"p2p_remote_desk/server/config"
 
-	"github.com/plutodemon/llog"
 	"google.golang.org/grpc"
 )
 

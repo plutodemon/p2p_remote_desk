@@ -1,15 +1,16 @@
 package window
 
 import (
-	"fyne.io/fyne/v2/canvas"
-	"fyne.io/fyne/v2/theme"
 	"image/color"
+
 	"p2p_remote_desk/client/config"
+	"p2p_remote_desk/llog"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
-	"github.com/plutodemon/llog"
 )
 
 type DeviceWindow struct {

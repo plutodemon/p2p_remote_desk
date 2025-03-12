@@ -7,11 +7,10 @@ import (
 	"syscall"
 
 	"p2p_remote_desk/lkit"
+	"p2p_remote_desk/llog"
 	"p2p_remote_desk/server/config"
 	"p2p_remote_desk/server/internal/auth"
 	"p2p_remote_desk/server/internal/signaling"
-
-	"github.com/plutodemon/llog"
 )
 
 func main() {

@@ -7,9 +7,8 @@ import (
 	"time"
 
 	"p2p_remote_desk/lkit"
+	"p2p_remote_desk/llog"
 	"p2p_remote_desk/server/config"
-
-	"github.com/plutodemon/llog"
 )
 
 // PeerInfo 存储对等端信息

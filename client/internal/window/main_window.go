@@ -2,15 +2,16 @@ package window
 
 import (
 	"fmt"
-	"fyne.io/fyne/v2/canvas"
-	"fyne.io/fyne/v2/container"
 	"image"
-	"p2p_remote_desk/client/internal/capture"
-	"p2p_remote_desk/lkit"
 	"time"
 
-	"fyne.io/fyne/v2"
 	"p2p_remote_desk/client/config"
+	"p2p_remote_desk/client/internal/capture"
+	"p2p_remote_desk/lkit"
+
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/container"
 )
 
 type MainWindow struct {

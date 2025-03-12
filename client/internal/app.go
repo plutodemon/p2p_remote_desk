@@ -1,12 +1,12 @@
 package internal
 
 import (
-	"fyne.io/fyne/v2/dialog"
 	"p2p_remote_desk/client/config"
 	"p2p_remote_desk/client/internal/window"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/dialog"
 )
 
 type App struct {
