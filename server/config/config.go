@@ -29,6 +29,12 @@ type ServerConfig struct {
 	AuthPort   int    `toml:"auth_port"`
 	SignalPort int    `toml:"signal_port"`
 	IcePort    int    `toml:"ice_port"`
+
+	MaxConnections    int   `toml:"max_connections"`     // 最大并发连接数
+	IdleTimeout       int64 `toml:"idle_timeout"`        // 连接空闲超时时间
+	GoroutinePoolSize int   `toml:"goroutine_pool_size"` // goroutine池大小
+	MessageBufferSize int   `toml:"message_buffer_size"` // 消息缓冲区大小
+	CleanupInterval   int64 `toml:"cleanup_interval"`    // 清理间隔
 }
 
 var (

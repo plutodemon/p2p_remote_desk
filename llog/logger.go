@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"runtime/debug"
 	"strings"
+	"sync"
 	"time"
 
 	"go.uber.org/zap"
@@ -14,17 +15,33 @@ import (
 )
 
 var (
-	log         *zap.Logger
-	sugar       *zap.SugaredLogger
-	initialized bool
+	log   *zap.Logger
+	sugar *zap.SugaredLogger
+	once  sync.Once
 )
+
+// 初始化一个空的logger，避免在未初始化前调用日志函数导致空指针异常
+func init() {
+	// 创建一个nopLogger，所有操作都是空操作
+	nopCore := zapcore.NewNopCore()
+	log = zap.New(nopCore)
+	sugar = log.Sugar()
+}
 
 // Init 初始化日志系统
 func Init(logConfig *LogSetting) error {
-	if initialized {
-		return nil
-	}
+	var initErr error
 
+	// 使用sync.Once确保只初始化一次
+	once.Do(func() {
+		initErr = initLogger(logConfig)
+	})
+
+	return initErr
+}
+
+// initLogger 实际的日志初始化函数
+func initLogger(logConfig *LogSetting) error {
 	if logConfig == nil {
 		logConfig = &DefaultConfig
 	}
@@ -105,7 +122,6 @@ func Init(logConfig *LogSetting) error {
 	// 输出初始化信息
 	sugar.Infof("日志系统初始化完成，日志级别: %s", strings.ToUpper(logConfig.Level))
 
-	initialized = true
 	return nil
 }
 
@@ -131,82 +147,52 @@ func FormatError(err error) string {
 
 // Debug 输出调试级别日志
 func Debug(args ...interface{}) {
-	if !initialized {
-		return
-	}
 	sugar.Debug(args...)
 }
 
 // Info 输出信息级别日志
 func Info(args ...interface{}) {
-	if !initialized {
-		return
-	}
 	sugar.Info(args...)
 }
 
 // Warn 输出警告级别日志
 func Warn(args ...interface{}) {
-	if !initialized {
-		return
-	}
 	sugar.Warn(args...)
 }
 
 // Error 输出错误级别日志
 func Error(args ...interface{}) {
-	if !initialized {
-		return
-	}
 	sugar.Error(args...)
 }
 
 // Fatal 输出致命错误日志并退出程序
 func Fatal(args ...interface{}) {
-	if !initialized {
-		return
-	}
 	sugar.Fatal(args...)
 }
 
 func DebugF(format string, args ...interface{}) {
-	if !initialized {
-		return
-	}
 	sugar.Debugf(format, args...)
 }
 
 func InfoF(format string, args ...interface{}) {
-	if !initialized {
-		return
-	}
 	sugar.Infof(format, args...)
 }
 
 func WarnF(format string, args ...interface{}) {
-	if !initialized {
-		return
-	}
 	sugar.Warnf(format, args...)
 }
 
 func ErrorF(format string, args ...interface{}) {
-	if !initialized {
-		return
-	}
 	sugar.Errorf(format, args...)
 }
 
 func FatalF(format string, args ...interface{}) {
-	if !initialized {
-		return
-	}
 	sugar.Fatalf(format, args...)
 }
 
 // Sync 同步日志到磁盘
 func Sync() {
-	if !initialized || log == nil {
+	if log != nil {
 		return
 	}
 
@@ -218,25 +204,19 @@ func Sync() {
 
 // Cleanup 清理日志资源
 func Cleanup() {
-	if !initialized {
-		return
-	}
-
 	if log != nil {
 		Sync()
 	}
 
-	initialized = false
+	// 重置为nopLogger
+	nopCore := zapcore.NewNopCore()
+	log = zap.New(nopCore)
+	sugar = log.Sugar()
 }
 
 // HandlePanic 处理panic并记录日志
 func HandlePanic() {
 	if r := recover(); r != nil {
-		stack := debug.Stack()
-		errorMsg := fmt.Sprintf("程序发生严重错误: %v\n堆栈信息:\n%s", r, stack)
-		Error(errorMsg)
-		Sync()
-		time.Sleep(100 * time.Millisecond)
-		os.Exit(1)
+		Fatal(fmt.Sprintf("程序发生严重错误: %v\n堆栈信息:\n%s", r, debug.Stack()))
 	}
 }

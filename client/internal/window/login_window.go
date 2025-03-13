@@ -2,7 +2,7 @@ package window
 
 import (
 	"p2p_remote_desk/client/config"
-	"p2p_remote_desk/client/internal/network/auth"
+	"p2p_remote_desk/client/internal/network"
 	"p2p_remote_desk/llog"
 
 	"fyne.io/fyne/v2"
@@ -78,13 +78,18 @@ func (w *LoginWindow) handleLogin(username, password string) {
 	}
 
 	// 验证用户名和密码
-	code := auth.LoginAuth(username, password)
-	if code == 0 {
-		llog.Info("用户登录成功: %s", username)
-		if w.onLoggedIn != nil {
-			w.onLoggedIn(username)
-		}
-	} else {
+	code := network.LoginAuth(username, password)
+	if code != 0 {
 		ShowError(w.Window, "用户名或密码错误")
+		return
+	}
+	llog.Info("用户登录成功: %s", username)
+	if w.onLoggedIn != nil {
+		w.onLoggedIn(username)
+	}
+
+	// 连接信令服务器
+	if err := network.ConnectSignalingServer(); err != nil {
+		ShowError(w.Window, err.Error())
 	}
 }

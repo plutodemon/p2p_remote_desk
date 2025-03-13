@@ -285,14 +285,14 @@ func handleWebSocketConn(conn *websocket.Conn) {
 				return
 			}
 
-			reg := common.SignalReg
+			var reg common.SignalMessage
 			if err := json.Unmarshal(msg, &reg); err != nil {
 				llog.Warn("解析注册消息失败:", err)
 				continue
 			}
 
-			if reg.Action == common.SignalRegActionRegister && reg.ID != "" {
-				clientID = reg.ID
+			if reg.Type == common.SignalMessageTypeRegister && reg.From != "" {
+				clientID = reg.From
 				// 使用改进的AddClient方法，检查连接数限制
 				if !SignalClients.AddClient(&Client{Id: clientID, Conn: conn, LastActiveTime: time.Now()}) {
 					llog.WarnF("客户端[ %s ]注册失败: 达到最大连接数限制", clientID)
@@ -338,14 +338,14 @@ func handleWebSocketConn(conn *websocket.Conn) {
 				continue
 			}
 
-			targetClient, exists := SignalClients.GetClient(msgObj.To)
+			targetClient, exists := SignalClients.GetClient(msgObj.From)
 			if exists {
 				// 直接转发原始消息，避免重新序列化
 				if err := targetClient.Conn.Write(ctx, websocket.MessageText, msgBytes); err != nil {
-					llog.WarnF("转发消息到[ %s ]失败: %v", msgObj.To, err)
+					llog.WarnF("转发消息到[ %s ]失败: %v", msgObj.From, err)
 				}
 			} else {
-				llog.WarnF("目标客户端[ %s ]不存在", msgObj.To)
+				llog.WarnF("目标客户端[ %s ]不存在", msgObj.From)
 			}
 
 			// 将对象放回池中

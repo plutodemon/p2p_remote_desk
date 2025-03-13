@@ -9,6 +9,12 @@ auth_port = 8080
 signal_port = 8081
 ice_port = 8082
 
+max_connections = 1000
+idle_timeout = 300
+goroutine_pool_size = 500
+message_buffer_size = 100
+cleanup_interval = 30
+
 # 日志设置
 [log]
 console = true

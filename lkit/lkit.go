@@ -3,6 +3,7 @@ package lkit
 import (
 	"fmt"
 	"os"
+	"time"
 )
 
 // SigChan 创建一个通道来接收信号
@@ -22,4 +23,9 @@ func SliceToStrList[k comparable](v []k) []string {
 
 func GetAddr(host, port any) string {
 	return fmt.Sprintf("%s:%d", host, port)
+}
+
+// GetNowUnix 秒级时间戳
+func GetNowUnix() int64 {
+	return time.Now().Unix()
 }
