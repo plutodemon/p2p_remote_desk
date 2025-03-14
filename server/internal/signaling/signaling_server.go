@@ -227,14 +227,25 @@ func dealMessage(ctx context.Context, msgChan chan []byte) {
 			// todo 这里根据消息类型处理消息
 			switch message.Type {
 			case common.SignalMessageTypeGetClientList:
-				targetClient, exists := SignalClients.GetClient(message.From)
-				if exists {
-					if err := targetClient.Write(ctx, websocket.MessageText, msgBytes); err != nil {
-						llog.WarnF("转发消息到[ %s ]失败: %v", message.From, err)
-					}
-				} else {
-					llog.WarnF("目标客户端[ %s ]不存在", message.From)
+				ret := make([]common.ClientInfo, 0)
+				SignalClients.clientsMu.RLock()
+				for _, client := range SignalClients.Clients {
+					ret = append(ret, common.ClientInfo{
+						Id: client.Id,
+						IP: 123123123,
+					})
 				}
+				SignalClients.clientsMu.RUnlock()
+				msg, _ := json.Marshal(common.SignalMessage{
+					From:    "server",
+					Type:    common.SignalMessageTypeGetClientList,
+					Message: ret,
+				})
+				targetClient, _ := SignalClients.GetClient(message.From)
+				if err := targetClient.Write(ctx, websocket.MessageText, msg); err != nil {
+					llog.WarnF("转发消息到[ %s ]失败: %v", message.From, err)
+				}
+
 			default:
 
 			}

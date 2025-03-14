@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"log"
 	"os"
+	"sync"
 
 	"p2p_remote_desk/client/config"
 	"p2p_remote_desk/common"
@@ -18,6 +18,8 @@ import (
 var clientID string
 var ctx context.Context
 var wsConn *websocket.Conn
+
+var Clients = sync.Map{}
 
 // ConnectSignalingServer 连接信令服务器
 func ConnectSignalingServer() error {
@@ -48,6 +50,12 @@ func ConnectSignalingServer() error {
 	}
 	llog.InfoF("客户端 %s 注册成功", clientID)
 
+	// 获取列表
+	if err := sendMessage(common.SignalMessageTypeGetClientList, nil); err != nil {
+		llog.Warn("获取列表失败:", err)
+		return err
+	}
+
 	for {
 		_, msgBytes, err := wsConn.Read(ctx)
 		if err != nil {
@@ -61,8 +69,13 @@ func ConnectSignalingServer() error {
 			continue
 		}
 
-		// 处理消息
-		log.Printf("收到来自 %s 的消息: Type=%s, Payload=%v", msg.From, msg.Type, msg.Message)
+		switch msg.Type {
+		case common.SignalMessageTypeGetClientList:
+			clients := msg.Message.([]common.ClientInfo)
+			for _, client := range clients {
+				Clients.Store(client.Id, client)
+			}
+		}
 	}
 }
 

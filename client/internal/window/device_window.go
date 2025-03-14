@@ -4,6 +4,8 @@ import (
 	"image/color"
 
 	"p2p_remote_desk/client/config"
+	"p2p_remote_desk/client/internal/network"
+	"p2p_remote_desk/common"
 	"p2p_remote_desk/llog"
 
 	"fyne.io/fyne/v2"
@@ -24,6 +26,7 @@ type DeviceWindow struct {
 type DeviceInfo struct {
 	ID       string // 设备ID
 	Name     string // 设备名称
+	IP       uint32 // 设备IP
 	IsOnline bool   // 是否在线
 }
 
@@ -132,13 +135,23 @@ func (w *DeviceWindow) setupUI() {
 }
 
 func (w *DeviceWindow) loadDevices() {
-	// TODO: 与信令服务器通信，获取设备列表
-	// 这里先使用模拟数据
-	w.devices = []*DeviceInfo{
-		{ID: "device1", Name: "我的电脑", IsOnline: true},
-		{ID: "device2", Name: "办公室电脑", IsOnline: false},
-		{ID: "device3", Name: "家里的笔记本", IsOnline: true},
-	}
+	// todo: 与信令服务器通信，获取设备列表
+	network.Clients.Range(func(key, value any) bool {
+		client := value.(common.ClientInfo)
+		w.devices = append(w.devices, &DeviceInfo{
+			ID:       client.Id,
+			Name:     "设备" + client.Id,
+			IP:       client.IP,
+			IsOnline: true,
+		})
+		return true
+	})
+
+	//w.devices = []*DeviceInfo{
+	//	{ID: "device1", Name: "我的电脑", IsOnline: true},
+	//	{ID: "device2", Name: "办公室电脑", IsOnline: false},
+	//	{ID: "device3", Name: "家里的笔记本", IsOnline: true},
+	//}
 
 	// 刷新列表显示
 	w.deviceList.Refresh()

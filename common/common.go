@@ -12,3 +12,8 @@ type SignalMessage struct {
 	Type    SignalMessageType `json:"type"`    // 消息类型 SignalMessageType
 	Message interface{}       `json:"message"` // 消息内容
 }
+
+type ClientInfo struct {
+	Id string `json:"id"`
+	IP uint32 `json:"ip"`
+}
