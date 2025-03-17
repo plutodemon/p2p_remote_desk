@@ -43,24 +43,27 @@ func ConnectSignalingServer() error {
 		_ = wsConn.CloseNow()
 	}()
 
-	// 注册客户端
-	if err := sendMessage(common.SignalMessageTypeRegister, nil); err != nil {
-		llog.Warn("注册失败:", err)
-		return err
-	}
-	llog.InfoF("客户端 %s 注册成功", clientID)
+	afterErr := make(chan error)
+	go func() {
+		readMessage(afterErr)
+	}()
+	go func() {
+		afterConnectSignalingServer(afterErr)
+	}()
 
-	// 获取列表
-	if err := sendMessage(common.SignalMessageTypeGetClientList, nil); err != nil {
-		llog.Warn("获取列表失败:", err)
-		return err
+	select {
+	case e := <-afterErr:
+		return e
 	}
+}
 
+func readMessage(afterErr chan error) {
 	for {
 		_, msgBytes, err := wsConn.Read(ctx)
 		if err != nil {
 			llog.Warn("读取消息失败:", err)
-			return err
+			afterErr <- err
+			return
 		}
 
 		var msg common.SignalMessage
@@ -76,6 +79,22 @@ func ConnectSignalingServer() error {
 				Clients.Store(client.Id, client)
 			}
 		}
+	}
+}
+
+func afterConnectSignalingServer(afterErr chan error) {
+	if err := sendMessage(common.SignalMessageTypeRegister, nil); err != nil {
+		llog.Warn("注册失败:", err)
+		afterErr <- err
+		return
+	}
+	llog.InfoF("客户端 %s 注册成功", clientID)
+
+	// 获取列表
+	if err := sendMessage(common.SignalMessageTypeGetClientList, nil); err != nil {
+		llog.Warn("获取列表失败:", err)
+		afterErr <- err
+		return
 	}
 }
 

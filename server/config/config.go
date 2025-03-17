@@ -35,6 +35,9 @@ type ServerConfig struct {
 	GoroutinePoolSize int   `toml:"goroutine_pool_size"` // goroutine池大小
 	MessageBufferSize int   `toml:"message_buffer_size"` // 消息缓冲区大小
 	CleanupInterval   int64 `toml:"cleanup_interval"`    // 清理间隔
+
+	ExpiryDuration   int64 `toml:"expiry_duration"`    // 空闲worker的过期时间
+	MaxBlockingTasks int   `toml:"max_blocking_tasks"` // 最大阻塞任务数
 }
 
 var (

@@ -36,6 +36,7 @@ func Start() {
 	}
 }
 
+// 注册服务
 func registerServiceServer(server *grpc.Server) {
 	common.RegisterAuthServer(server, &Login{})
 }

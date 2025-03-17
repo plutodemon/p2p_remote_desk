@@ -15,6 +15,9 @@ goroutine_pool_size = 500
 message_buffer_size = 100
 cleanup_interval = 30
 
+expiry_duration = 10
+max_blocking_tasks = 1000
+
 # 日志设置
 [log]
 console = true

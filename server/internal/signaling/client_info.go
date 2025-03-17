@@ -98,6 +98,16 @@ func (c *ClientsInfo) GetClient(clientID string) (*Client, bool) {
 	return nil, false
 }
 
+func (c *ClientsInfo) ClientRange(f func(client *Client) bool) {
+	c.clientsMu.RLock()
+	defer c.clientsMu.RUnlock()
+	for _, client := range c.Clients {
+		if !f(client) {
+			break
+		}
+	}
+}
+
 // 定期清理不活跃的连接
 func startCleanupRoutine() {
 	cfg := config.GetConfig().Server

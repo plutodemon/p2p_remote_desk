@@ -19,7 +19,7 @@ import (
 	"github.com/panjf2000/ants/v2"
 )
 
-var Pool *ants.Pool
+var pool *ants.Pool
 
 var SignalClients = &ClientsInfo{
 	Clients:   make(map[string]*Client),
@@ -35,23 +35,23 @@ func Start() {
 	cfg := config.GetConfig().Server
 
 	poolOptions := ants.Options{
-		ExpiryDuration:   10 * time.Minute, // 空闲worker的过期时间
-		PreAlloc:         true,             // 预分配goroutine队列内存
-		MaxBlockingTasks: 1000,             // 最大阻塞任务数
-		Nonblocking:      false,            // 设置为true时，当池满时Submit会返回ErrPoolOverload错误
+		ExpiryDuration:   time.Duration(cfg.ExpiryDuration) * time.Minute,
+		PreAlloc:         true,                 // 预分配goroutine队列内存
+		MaxBlockingTasks: cfg.MaxBlockingTasks, // 最大阻塞任务数
+		Nonblocking:      false,                // 设置为true时，当池满时Submit会返回ErrPoolOverload错误
 		PanicHandler: func(p interface{}) {
 			llog.Error("协程池处理任务时发生panic:", p)
 		},
 	}
 
 	var err error
-	Pool, err = ants.NewPool(cfg.GoroutinePoolSize, ants.WithOptions(poolOptions))
+	pool, err = ants.NewPool(cfg.GoroutinePoolSize, ants.WithOptions(poolOptions))
 	if err != nil {
 		llog.Error("创建goroutine池失败:", err)
 		lkit.SigChan <- syscall.SIGTERM
 		return
 	}
-	defer Pool.Release()
+	defer pool.Release()
 
 	// 启动定期清理不活跃连接的协程
 	startCleanupRoutine()
@@ -88,7 +88,7 @@ func handleSignaling(w http.ResponseWriter, r *http.Request) {
 	// 提交任务到协程池，使用重试机制
 	var submitted bool
 	for retries := 0; retries < 3; retries++ {
-		err = Pool.Submit(func() {
+		err = pool.Submit(func() {
 			handleWebSocketConn(conn)
 		})
 
@@ -130,7 +130,9 @@ func handleWebSocketConn(conn *websocket.Conn) {
 	registerChan := make(chan bool)
 
 	// 启动一个goroutine处理注册
-	dealRegisterMessage(ctx, conn, registerChan, &clientID)
+	go func() {
+		dealRegisterMessage(ctx, conn, registerChan, &clientID)
+	}()
 
 	// 等待注册完成或超时
 	select {
@@ -154,7 +156,9 @@ func handleWebSocketConn(conn *websocket.Conn) {
 	msgChan := make(chan []byte, cfg.MessageBufferSize)
 
 	// 启动消息处理协程
-	dealMessage(ctx, msgChan)
+	go func() {
+		dealMessage(ctx, msgChan)
+	}()
 
 	// 主循环读取消息并发送到处理通道
 	for {
@@ -182,76 +186,74 @@ func handleWebSocketConn(conn *websocket.Conn) {
 }
 
 func dealRegisterMessage(ctx context.Context, conn *websocket.Conn, registerChan chan bool, clientID *string) {
-	go func() {
-		for {
-			_, msg, err := conn.Read(ctx)
-			if err != nil {
-				llog.Warn("读取注册消息失败:", err)
+	for {
+		_, msg, err := conn.Read(ctx)
+		if err != nil {
+			llog.Warn("读取注册消息失败:", err)
+			registerChan <- false
+			return
+		}
+
+		var message common.SignalMessage
+		if err = json.Unmarshal(msg, &message); err != nil {
+			llog.Warn("解析注册消息失败:", err)
+			continue
+		}
+
+		if message.Type == common.SignalMessageTypeRegister && message.From != "" {
+			*clientID = message.From
+			if !SignalClients.AddClient(NewClient(message.From, conn)) {
+				llog.WarnF("客户端[ %s ]注册失败: 达到最大连接数限制", message.From)
 				registerChan <- false
 				return
 			}
-
-			var message common.SignalMessage
-			if err := json.Unmarshal(msg, &message); err != nil {
-				llog.Warn("解析注册消息失败:", err)
-				continue
-			}
-
-			if message.Type == common.SignalMessageTypeRegister && message.From != "" {
-				*clientID = message.From
-				if !SignalClients.AddClient(NewClient(message.From, conn)) {
-					llog.WarnF("客户端[ %s ]注册失败: 达到最大连接数限制", message.From)
-					registerChan <- false
-					return
-				}
-				registerChan <- true
-				return
-			}
+			registerChan <- true
+			return
 		}
-	}()
+	}
 }
 
 func dealMessage(ctx context.Context, msgChan chan []byte) {
-	go func() {
-		for msgBytes := range msgChan {
-			// 从对象池获取消息对象
-			message := SignalClients.messagePool.Get().(*common.SignalMessage)
+	for msgBytes := range msgChan {
+		// 从对象池获取消息对象
+		message := SignalClients.messagePool.Get().(*common.SignalMessage)
 
-			if err := json.Unmarshal(msgBytes, message); err != nil {
-				llog.Warn("解析消息失败:", err)
-				// 将对象放回池中
-				SignalClients.messagePool.Put(message)
-				continue
-			}
-
-			// todo 这里根据消息类型处理消息
-			switch message.Type {
-			case common.SignalMessageTypeGetClientList:
-				ret := make([]common.ClientInfo, 0)
-				SignalClients.clientsMu.RLock()
-				for _, client := range SignalClients.Clients {
-					ret = append(ret, common.ClientInfo{
-						Id: client.Id,
-						IP: 123123123,
-					})
-				}
-				SignalClients.clientsMu.RUnlock()
-				msg, _ := json.Marshal(common.SignalMessage{
-					From:    "server",
-					Type:    common.SignalMessageTypeGetClientList,
-					Message: ret,
-				})
-				targetClient, _ := SignalClients.GetClient(message.From)
-				if err := targetClient.Write(ctx, websocket.MessageText, msg); err != nil {
-					llog.WarnF("转发消息到[ %s ]失败: %v", message.From, err)
-				}
-
-			default:
-
-			}
-
+		if err := json.Unmarshal(msgBytes, message); err != nil {
+			llog.Warn("解析消息失败:", err)
 			// 将对象放回池中
 			SignalClients.messagePool.Put(message)
+			continue
 		}
-	}()
+
+		// todo 这里根据消息类型处理消息
+		switch message.Type {
+		case common.SignalMessageTypeGetClientList:
+			ret := make([]common.ClientInfo, 0)
+
+			SignalClients.ClientRange(func(client *Client) bool {
+				ret = append(ret, common.ClientInfo{
+					Id: client.Id,
+					IP: 123123123,
+				})
+				return true
+			})
+
+			msg, _ := json.Marshal(common.SignalMessage{
+				From:    "server",
+				Type:    common.SignalMessageTypeGetClientList,
+				Message: ret,
+			})
+
+			targetClient, _ := SignalClients.GetClient(message.From)
+			if err := targetClient.Write(ctx, websocket.MessageText, msg); err != nil {
+				llog.WarnF("转发消息到[ %s ]失败: %v", message.From, err)
+			}
+
+		default:
+
+		}
+
+		// 将对象放回池中
+		SignalClients.messagePool.Put(message)
+	}
 }
