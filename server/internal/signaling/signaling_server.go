@@ -238,14 +238,16 @@ func dealMessage(ctx context.Context, msgChan chan []byte) {
 				return true
 			})
 
-			msg, _ := json.Marshal(common.SignalMessage{
-				From:    "server",
-				Type:    common.SignalMessageTypeGetClientList,
-				Message: ret,
-			})
+			signalMsg, err := common.CreateSignalMessage("server", common.SignalMessageTypeGetClientList, ret)
+			if err != nil {
+				llog.Warn("创建消息失败:", err)
+				continue
+			}
+
+			msg, _ := json.Marshal(signalMsg)
 
 			targetClient, _ := SignalClients.GetClient(message.From)
-			if err := targetClient.Write(ctx, websocket.MessageText, msg); err != nil {
+			if err = targetClient.Write(ctx, websocket.MessageText, msg); err != nil {
 				llog.WarnF("转发消息到[ %s ]失败: %v", message.From, err)
 			}
 

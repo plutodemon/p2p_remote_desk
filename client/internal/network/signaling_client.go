@@ -67,16 +67,21 @@ func readMessage(afterErr chan error) {
 		}
 
 		var msg common.SignalMessage
-		if err := json.Unmarshal(msgBytes, &msg); err != nil {
+		if err = json.Unmarshal(msgBytes, &msg); err != nil {
 			llog.Warn("解析消息失败:", err)
 			continue
 		}
 
 		switch msg.Type {
 		case common.SignalMessageTypeGetClientList:
-			clients := msg.Message.([]common.ClientInfo)
-			for _, client := range clients {
-				Clients.Store(client.Id, client)
+			clients := make([]common.ClientInfo, 0)
+			err = msg.GetMessage(common.SignalMessageTypeGetClientList, &clients)
+			if err != nil {
+				llog.Warn("解析客户端列表失败:", err)
+				continue
+			}
+			for _, c := range clients {
+				Clients.Store(c.Id, c)
 			}
 		}
 	}
@@ -103,11 +108,15 @@ func sendMessage(messageType common.SignalMessageType, message interface{}) erro
 		return errors.New("ctx or wsConn is nil")
 	}
 
-	regMsg, _ := json.Marshal(common.SignalMessage{
-		From:    clientID,
-		Type:    messageType,
-		Message: message,
-	})
+	msg, err := common.CreateSignalMessage(clientID, messageType, message)
+	if err != nil {
+		return err
+	}
+
+	regMsg, err := json.Marshal(msg)
+	if err != nil {
+		return err
+	}
 
 	return wsConn.Write(ctx, websocket.MessageText, regMsg)
 }
