@@ -77,19 +77,35 @@ func (w *LoginWindow) handleLogin(username, password string) {
 		return
 	}
 
+	// 创建加载动画
+	progress := widget.NewProgressBarInfinite()
+	loadingLabel := widget.NewLabel("正在登录，请稍候...")
+	loadingContainer := container.NewVBox(loadingLabel, progress)
+	loadingPopup := widget.NewModalPopUp(loadingContainer, w.Window.Canvas())
+	loadingPopup.Show()
+
 	// 验证用户名和密码
 	code := network.LoginAuth(username, password)
 	if code != 0 {
+		// 隐藏加载动画
+		loadingPopup.Hide()
 		ShowError(w.Window, "用户名或密码错误")
 		return
 	}
 	llog.Info("用户登录成功: %s", username)
-	if w.onLoggedIn != nil {
-		w.onLoggedIn(username)
-	}
 
 	// 连接信令服务器
 	if err := network.ConnectSignalingServer(); err != nil {
+		// 隐藏加载动画
+		loadingPopup.Hide()
 		ShowError(w.Window, err.Error())
+		return
+	}
+
+	// 隐藏加载动画
+	loadingPopup.Hide()
+
+	if w.onLoggedIn != nil {
+		w.onLoggedIn(username)
 	}
 }

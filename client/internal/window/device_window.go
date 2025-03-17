@@ -6,6 +6,7 @@ import (
 	"p2p_remote_desk/client/config"
 	"p2p_remote_desk/client/internal/network"
 	"p2p_remote_desk/common"
+	"p2p_remote_desk/lkit"
 	"p2p_remote_desk/llog"
 
 	"fyne.io/fyne/v2"
@@ -58,6 +59,7 @@ func (w *DeviceWindow) setupUI() {
 				widget.NewIcon(nil),
 				widget.NewLabel(""),
 				widget.NewLabel(""),
+				widget.NewIcon(nil),
 			)
 		},
 		func(id widget.ListItemID, obj fyne.CanvasObject) {
@@ -66,17 +68,23 @@ func (w *DeviceWindow) setupUI() {
 
 			// 设备图标
 			hBox.Objects[0].(*widget.Icon).SetResource(theme.ComputerIcon())
+
 			// 设备名称
 			nameLabel := hBox.Objects[1].(*widget.Label)
 			nameLabel.SetText(device.Name)
 
+			// 设备ip
+			ipLabel := hBox.Objects[2].(*widget.Label)
+			ipLabel.SetText(lkit.AnyToStr(device.IP))
+
 			// 设备状态
-			statusLabel := hBox.Objects[2].(*widget.Label)
+			var res fyne.Resource
 			if device.IsOnline {
-				statusLabel.SetText("[在线]")
+				res = theme.RadioButtonCheckedIcon()
 			} else {
-				statusLabel.SetText("[离线]")
+				res = theme.RadioButtonIcon()
 			}
+			hBox.Objects[3].(*widget.Icon).SetResource(res)
 		},
 	)
 
@@ -135,7 +143,9 @@ func (w *DeviceWindow) setupUI() {
 }
 
 func (w *DeviceWindow) loadDevices() {
-	// todo: 与信令服务器通信，获取设备列表
+	// 先清空设备列表
+	w.devices = make([]*DeviceInfo, 0)
+
 	network.Clients.Range(func(key, value any) bool {
 		client := value.(common.ClientInfo)
 		w.devices = append(w.devices, &DeviceInfo{

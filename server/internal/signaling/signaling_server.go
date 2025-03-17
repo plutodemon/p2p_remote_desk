@@ -164,7 +164,7 @@ func handleWebSocketConn(conn *websocket.Conn) {
 	for {
 		_, msgBytes, err := conn.Read(ctx)
 		if err != nil {
-			llog.WarnF("客户端[ %s ]断开连接: %v", clientID, err)
+			// llog.WarnF("客户端[ %s ]断开连接: %v", clientID, err)
 			close(msgChan) // 关闭消息通道
 			return
 		}
