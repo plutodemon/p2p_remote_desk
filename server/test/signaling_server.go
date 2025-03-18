@@ -291,8 +291,8 @@ func handleWebSocketConn(conn *websocket.Conn) {
 				continue
 			}
 
-			if reg.Type == common.SignalMessageTypeRegister && reg.From != "" {
-				clientID = reg.From
+			if reg.Type == common.SignalMessageTypeRegister && reg.Sender.UID != "" {
+				clientID = reg.Sender.UID
 				// 使用改进的AddClient方法，检查连接数限制
 				if !SignalClients.AddClient(&Client{Id: clientID, Conn: conn, LastActiveTime: time.Now()}) {
 					llog.WarnF("客户端[ %s ]注册失败: 达到最大连接数限制", clientID)
@@ -338,14 +338,14 @@ func handleWebSocketConn(conn *websocket.Conn) {
 				continue
 			}
 
-			targetClient, exists := SignalClients.GetClient(msgObj.From)
+			targetClient, exists := SignalClients.GetClient(msgObj.Sender.UID)
 			if exists {
 				// 直接转发原始消息，避免重新序列化
 				if err := targetClient.Conn.Write(ctx, websocket.MessageText, msgBytes); err != nil {
-					llog.WarnF("转发消息到[ %s ]失败: %v", msgObj.From, err)
+					llog.WarnF("转发消息到[ %s ]失败: %v", msgObj.Sender.UID, err)
 				}
 			} else {
-				llog.WarnF("目标客户端[ %s ]不存在", msgObj.From)
+				llog.WarnF("目标客户端[ %s ]不存在", msgObj.Sender.UID)
 			}
 
 			// 将对象放回池中

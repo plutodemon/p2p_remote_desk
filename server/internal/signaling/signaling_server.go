@@ -126,12 +126,12 @@ func handleWebSocketConn(conn *websocket.Conn) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	var clientID string
+	var clientUID string
 	registerChan := make(chan bool)
 
 	// 启动一个goroutine处理注册
 	go func() {
-		dealRegisterMessage(ctx, conn, registerChan, &clientID)
+		dealRegisterMessage(ctx, conn, registerChan, &clientUID)
 	}()
 
 	// 等待注册完成或超时
@@ -146,7 +146,7 @@ func handleWebSocketConn(conn *websocket.Conn) {
 	}
 
 	// 注册成功后，确保客户端断开连接时移除注册信息
-	defer SignalClients.RemoveClient(clientID)
+	defer SignalClients.RemoveClient(clientUID)
 
 	// 重置为无超时的上下文用于后续通信
 	ctx = context.Background()
@@ -164,13 +164,13 @@ func handleWebSocketConn(conn *websocket.Conn) {
 	for {
 		_, msgBytes, err := conn.Read(ctx)
 		if err != nil {
-			// llog.WarnF("客户端[ %s ]断开连接: %v", clientID, err)
+			// llog.WarnF("客户端[ %s ]断开连接: %v", clientUID, err)
 			close(msgChan) // 关闭消息通道
 			return
 		}
 
 		// 更新客户端活跃时间
-		if client, exists := SignalClients.GetClient(clientID); exists {
+		if client, exists := SignalClients.GetClient(clientUID); exists {
 			client.UpdateInfo(nil)
 		}
 
@@ -180,12 +180,12 @@ func handleWebSocketConn(conn *websocket.Conn) {
 			// 消息成功加入队列
 		default:
 			// 队列已满，丢弃消息
-			llog.WarnF("客户端[ %s ]消息队列已满，丢弃消息", clientID)
+			llog.WarnF("客户端[ %s ]消息队列已满，丢弃消息", clientUID)
 		}
 	}
 }
 
-func dealRegisterMessage(ctx context.Context, conn *websocket.Conn, registerChan chan bool, clientID *string) {
+func dealRegisterMessage(ctx context.Context, conn *websocket.Conn, registerChan chan bool, clientUID *string) {
 	for {
 		_, msg, err := conn.Read(ctx)
 		if err != nil {
@@ -200,10 +200,10 @@ func dealRegisterMessage(ctx context.Context, conn *websocket.Conn, registerChan
 			continue
 		}
 
-		if message.Type == common.SignalMessageTypeRegister && message.From != "" {
-			*clientID = message.From
-			if !SignalClients.AddClient(NewClient(message.From, conn)) {
-				llog.WarnF("客户端[ %s ]注册失败: 达到最大连接数限制", message.From)
+		if message.Type == common.SignalMessageTypeRegister && message.Sender.UID != "" && message.Sender.Token != "" {
+			*clientUID = message.Sender.UID
+			if !SignalClients.AddClient(NewClient(message.Sender.UID, message.Sender.Token, conn)) {
+				llog.WarnF("客户端[ %s ]注册失败: 达到最大连接数限制", message.Sender.Token)
 				registerChan <- false
 				return
 			}
@@ -232,23 +232,28 @@ func dealMessage(ctx context.Context, msgChan chan []byte) {
 
 			SignalClients.ClientRange(func(client *Client) bool {
 				ret = append(ret, common.ClientInfo{
-					Id: client.Id,
+					Id: client.UID,
 					IP: 123123123,
 				})
 				return true
 			})
 
-			signalMsg, err := common.CreateSignalMessage("server", common.SignalMessageTypeGetClientList, ret)
+			targetClient, _ := SignalClients.GetClient(message.Sender.UID)
+			sender := &common.MessageSender{
+				From:  common.SignalMessageSenderTypeServer,
+				UID:   "server",
+				Token: targetClient.Token,
+			}
+
+			signalMsg, err := common.CreateSignalMessage(sender, common.SignalMessageTypeGetClientList, ret)
 			if err != nil {
 				llog.Warn("创建消息失败:", err)
 				continue
 			}
 
 			msg, _ := json.Marshal(signalMsg)
-
-			targetClient, _ := SignalClients.GetClient(message.From)
 			if err = targetClient.Write(ctx, websocket.MessageText, msg); err != nil {
-				llog.WarnF("转发消息到[ %s ]失败: %v", message.From, err)
+				llog.WarnF("转发消息到[ %s ]失败: %v", message.Sender.UID, err)
 			}
 
 		default:

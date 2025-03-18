@@ -8,20 +8,30 @@ import (
 )
 
 type SignalMessageType = string
+type SignalMessageSenderType = string
 
 const (
 	SignalMessageTypeRegister      SignalMessageType = "register"
 	SignalMessageTypeGetClientList SignalMessageType = "getClientList"
+
+	SignalMessageSenderTypeClient SignalMessageSenderType = "client"
+	SignalMessageSenderTypeServer SignalMessageSenderType = "server"
 )
 
 type SignalMessage struct {
-	From    string            `json:"from"`    // 发送方
+	Sender  MessageSender     `json:"sender"`  // 发送方信息
 	Type    SignalMessageType `json:"type"`    // 消息类型 SignalMessageType
 	Message json.RawMessage   `json:"message"` // 消息内容，使用json.RawMessage替代interface{}
 }
 
+type MessageSender struct {
+	From  string `json:"from"`  // 发送方 SignalMessageSenderType
+	UID   string `json:"uid"`   // 发送方UID 客户端为唯一标识符 服务端为服务端名称
+	Token string `json:"token"` // 客户端第一次发送的token为client_name 后续为token
+}
+
 // CreateSignalMessage 创建信令消息
-func CreateSignalMessage(from string, msgType SignalMessageType, message interface{}) (*SignalMessage, error) {
+func CreateSignalMessage(sender *MessageSender, msgType SignalMessageType, message interface{}) (*SignalMessage, error) {
 	var rawMsg json.RawMessage
 	var err error
 
@@ -36,7 +46,7 @@ func CreateSignalMessage(from string, msgType SignalMessageType, message interfa
 	}
 
 	return &SignalMessage{
-		From:    from,
+		Sender:  *sender,
 		Type:    msgType,
 		Message: rawMsg,
 	}, nil

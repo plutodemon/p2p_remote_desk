@@ -14,15 +14,19 @@ import (
 )
 
 type Client struct {
-	Id             string
+	UID            string
+	ClientName     string
+	Token          string
 	LastActiveTime int64
 	Conn           *websocket.Conn
 	Mu             sync.Mutex
 }
 
-func NewClient(clientID string, conn *websocket.Conn) *Client {
+func NewClient(clientUID, clientName string, conn *websocket.Conn) *Client {
 	return &Client{
-		Id:             clientID,
+		UID:            clientUID,
+		ClientName:     clientName,
+		Token:          clientUID + clientName,
 		LastActiveTime: lkit.GetNowUnix(),
 		Conn:           conn,
 		Mu:             sync.Mutex{},
@@ -66,29 +70,29 @@ func (c *ClientsInfo) AddClient(client *Client) bool {
 	}
 
 	c.clientsMu.Lock()
-	c.Clients[client.Id] = client
+	c.Clients[client.UID] = client
 	c.clientsMu.Unlock()
 
 	// 增加活跃连接计数
 	atomic.AddInt32(&c.activeConns, 1)
-	llog.InfoF("客户端 %s 已注册，当前连接数: %d", client.Id, atomic.LoadInt32(&c.activeConns))
+	llog.InfoF("客户端 %s 已注册，当前连接数: %d", client.UID, atomic.LoadInt32(&c.activeConns))
 	return true
 }
 
-func (c *ClientsInfo) RemoveClient(clientID string) {
+func (c *ClientsInfo) RemoveClient(clientUID string) {
 	c.clientsMu.Lock()
 	defer c.clientsMu.Unlock()
-	if _, exists := c.Clients[clientID]; exists {
-		delete(c.Clients, clientID)
+	if _, exists := c.Clients[clientUID]; exists {
+		delete(c.Clients, clientUID)
 		// 减少活跃连接计数
 		atomic.AddInt32(&c.activeConns, -1)
-		llog.InfoF("客户端 %s 已注销，当前连接数: %d", clientID, atomic.LoadInt32(&c.activeConns))
+		llog.InfoF("客户端 %s 已注销，当前连接数: %d", clientUID, atomic.LoadInt32(&c.activeConns))
 	}
 }
 
-func (c *ClientsInfo) GetClient(clientID string) (*Client, bool) {
+func (c *ClientsInfo) GetClient(clientUID string) (*Client, bool) {
 	c.clientsMu.RLock()
-	client, ok := c.Clients[clientID]
+	client, ok := c.Clients[clientUID]
 	c.clientsMu.RUnlock()
 
 	if ok {

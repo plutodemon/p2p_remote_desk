@@ -13,26 +13,42 @@ import (
 	"p2p_remote_desk/llog"
 
 	"github.com/coder/websocket"
+	"github.com/denisbrodbeck/machineid"
 )
 
-var clientID string
-var ctx context.Context
-var wsConn *websocket.Conn
+var (
+	ClientUID  string          // 设备唯一标识
+	ClientName string          // 设备名称(可修改备注)
+	UserToken  string          // 设备token
+	ctx        context.Context // 上下文
+	wsConn     *websocket.Conn // websocket连接
+	Clients    = sync.Map{}    // 客户端列表
+)
 
-var Clients = sync.Map{}
+func initClient() error {
+	var err error
+	ClientName, err = os.Hostname()
+	UserToken = ClientName
+	if err != nil {
+		return err
+	}
+	ClientUID, err = machineid.ID()
+	return err
+}
 
 // ConnectSignalingServer 连接信令服务器
 func ConnectSignalingServer() error {
+	var err error
+
+	if err = initClient(); err != nil {
+		llog.Warn("初始化客户端失败", "error:", err)
+		return err
+	}
+
 	ctx = context.Background()
 	cfg := config.GetConfig().ServerConfig
 	addr := lkit.GetAddr(cfg.Address, cfg.SignalPort)
 	url := "ws://" + addr + "/signaling"
-
-	name, err := os.Hostname()
-	if err != nil {
-		return err
-	}
-	clientID = name
 
 	wsConn, _, err = websocket.Dial(ctx, url, nil)
 	if err != nil {
@@ -71,6 +87,7 @@ func readMessage(afterErr chan error) {
 			llog.Warn("解析消息失败:", err)
 			continue
 		}
+		UserToken = msg.Sender.Token
 
 		switch msg.Type {
 		case common.SignalMessageTypeGetClientList:
@@ -93,7 +110,7 @@ func afterConnectSignalingServer(afterErr chan error) {
 		afterErr <- err
 		return
 	}
-	llog.InfoF("客户端 %s 注册成功", clientID)
+	llog.InfoF("客户端 %s 注册成功", ClientName)
 
 	// 获取列表
 	if err := sendMessage(common.SignalMessageTypeGetClientList, nil); err != nil {
@@ -108,7 +125,12 @@ func sendMessage(messageType common.SignalMessageType, message interface{}) erro
 		return errors.New("ctx or wsConn is nil")
 	}
 
-	msg, err := common.CreateSignalMessage(clientID, messageType, message)
+	sender := &common.MessageSender{
+		From:  common.SignalMessageSenderTypeClient,
+		UID:   ClientUID,
+		Token: UserToken,
+	}
+	msg, err := common.CreateSignalMessage(sender, messageType, message)
 	if err != nil {
 		return err
 	}
