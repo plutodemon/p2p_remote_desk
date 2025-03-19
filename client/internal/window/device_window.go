@@ -4,8 +4,6 @@ import (
 	"image/color"
 
 	"p2p_remote_desk/client/config"
-	"p2p_remote_desk/client/internal/network"
-	"p2p_remote_desk/common"
 	"p2p_remote_desk/lkit"
 	"p2p_remote_desk/llog"
 
@@ -55,27 +53,33 @@ func (w *DeviceWindow) setupUI() {
 			return len(w.devices)
 		},
 		func() fyne.CanvasObject {
-			return container.NewHBox(
+			info := container.NewCenter(
+				container.NewHBox(
+					widget.NewLabel(""),
+					widget.NewLabel(""),
+				),
+			)
+			return container.NewBorder(nil, nil,
 				widget.NewIcon(nil),
-				widget.NewLabel(""),
-				widget.NewLabel(""),
 				widget.NewIcon(nil),
+				info,
 			)
 		},
 		func(id widget.ListItemID, obj fyne.CanvasObject) {
-			hBox := obj.(*fyne.Container)
+			border := obj.(*fyne.Container)
 			device := w.devices[id]
 
-			// 设备图标
-			hBox.Objects[0].(*widget.Icon).SetResource(theme.ComputerIcon())
-
 			// 设备名称
-			nameLabel := hBox.Objects[1].(*widget.Label)
+			labelList := border.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container)
+			nameLabel := labelList.Objects[0].(*widget.Label)
 			nameLabel.SetText(device.Name)
 
 			// 设备ip
-			ipLabel := hBox.Objects[2].(*widget.Label)
+			ipLabel := labelList.Objects[1].(*widget.Label)
 			ipLabel.SetText(lkit.AnyToStr(device.IP))
+
+			// 设备图标
+			border.Objects[1].(*widget.Icon).SetResource(theme.ComputerIcon())
 
 			// 设备状态
 			var res fyne.Resource
@@ -84,7 +88,7 @@ func (w *DeviceWindow) setupUI() {
 			} else {
 				res = theme.RadioButtonIcon()
 			}
-			hBox.Objects[3].(*widget.Icon).SetResource(res)
+			border.Objects[2].(*widget.Icon).SetResource(res)
 		},
 	)
 
@@ -146,23 +150,24 @@ func (w *DeviceWindow) loadDevices() {
 	// 先清空设备列表
 	w.devices = make([]*DeviceInfo, 0)
 
-	network.Clients.Range(func(key, value any) bool {
-		client := value.(common.ClientInfo)
-		w.devices = append(w.devices, &DeviceInfo{
-			ID:       client.Id,
-			Name:     "设备" + client.Id,
-			IP:       client.IP,
-			IsOnline: true,
-		})
-		return true
-	})
+	//network.Clients.Range(func(key, value any) bool {
+	//	client := value.(common.ClientInfo)
+	//	w.devices = append(w.devices, &DeviceInfo{
+	//		ID:       client.UID,
+	//		Name:     "设备" + client.Name,
+	//		IP:       client.IP,
+	//		IsOnline: true,
+	//	})
+	//	return true
+	//})
 
-	//w.devices = []*DeviceInfo{
-	//	{ID: "device1", Name: "我的电脑", IsOnline: true},
-	//	{ID: "device2", Name: "办公室电脑", IsOnline: false},
-	//	{ID: "device3", Name: "家里的笔记本", IsOnline: true},
-	//}
+	w.devices = []*DeviceInfo{
+		{ID: "device1", Name: "我的电脑", IP: 111, IsOnline: true},
+		{ID: "device2", Name: "办公室电脑", IP: 222, IsOnline: false},
+		{ID: "device3", Name: "家里的笔记本", IP: 333, IsOnline: true},
+	}
 
 	// 刷新列表显示
+	w.deviceList.UnselectAll()
 	w.deviceList.Refresh()
 }

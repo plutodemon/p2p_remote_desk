@@ -232,8 +232,10 @@ func dealMessage(ctx context.Context, msgChan chan []byte) {
 
 			SignalClients.ClientRange(func(client *Client) bool {
 				ret = append(ret, common.ClientInfo{
-					Id: client.UID,
-					IP: 123123123,
+					UID:   client.UID,
+					IP:    123123123,
+					Name:  client.ClientName,
+					Token: client.Token,
 				})
 				return true
 			})

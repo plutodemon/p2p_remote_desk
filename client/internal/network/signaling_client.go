@@ -98,7 +98,7 @@ func readMessage(afterErr chan error) {
 				continue
 			}
 			for _, c := range clients {
-				Clients.Store(c.Id, c)
+				Clients.Store(c.UID, c)
 			}
 		}
 	}

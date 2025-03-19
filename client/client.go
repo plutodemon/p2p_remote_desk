@@ -29,8 +29,7 @@ func main() {
 	defer llog.HandlePanic()
 
 	if err := glfw.Init(); err != nil {
-		llog.Error("初始化glfw失败: ", err)
-		os.Exit(1)
+		llog.Fatal("初始化glfw失败: ", err)
 	}
 	defer glfw.Terminate()
 

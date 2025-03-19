@@ -76,6 +76,8 @@ func (s *SignalMessage) GetMessage(messageType SignalMessageType, result interfa
 }
 
 type ClientInfo struct {
-	Id string `json:"id"`
-	IP uint32 `json:"ip"`
+	UID   string `json:"uid"`
+	IP    uint32 `json:"ip"`
+	Name  string `json:"name"`
+	Token string `json:"token"`
 }
