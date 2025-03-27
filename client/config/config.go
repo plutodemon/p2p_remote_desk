@@ -21,9 +21,6 @@ type RemoteConfig struct {
 	// 服务器设置
 	ServerConfig *Server `toml:"server"`
 
-	// 屏幕设置
-	ScreenConfig *Screen `toml:"screen"`
-
 	// UI设置
 	UIConfig *UI `toml:"ui"`
 
@@ -40,20 +37,6 @@ type Server struct {
 	SignalPort int    `toml:"signal_port"`
 	IcePort    int    `toml:"ice_port"`
 }
-
-type Screen struct {
-	DefaultQuality   string            `toml:"default_quality"`
-	DefaultFrameRate int               `toml:"default_frame_rate"`
-	FrameRates       []int             `toml:"frame_rates"`
-	QualityList      []*QualitySetting `toml:"quality"`
-}
-
-type QualitySetting struct {
-	Name        string  `toml:"name"`
-	Scale       float64 `toml:"scale"`
-	Compression int     `toml:"compression"`
-}
-
 type UI struct {
 	Theme                   string      `toml:"theme"`
 	Language                string      `toml:"language"`

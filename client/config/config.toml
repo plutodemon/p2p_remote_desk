@@ -9,27 +9,6 @@ auth_port = 8080
 signal_port = 8081
 ice_port = 8082
 
-# 屏幕设置
-[screen]
-default_quality = "high"
-default_frame_rate = 30
-frame_rates = [15, 30, 60]
-
-[[screen.quality]]
-name = "低"
-scale = 0.3
-compression = 50
-
-[[screen.quality]]
-name = "中"
-scale = 0.6
-compression = 70
-
-[[screen.quality]]
-name = "高"
-scale = 1.0
-compression = 95
-
 # UI设置
 [ui]
 theme = "dark"

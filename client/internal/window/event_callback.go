@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
-	"p2p_remote_desk/client/config"
 	"p2p_remote_desk/llog"
 )
 
@@ -63,51 +63,35 @@ func (w *MainWindow) handleControllerConnect() {
 	}()
 }
 
-func (w *MainWindow) onFullScreenClick() {
-	defer func() {
+func (w *MainWindow) onFullScreenClick() func() {
+	return func() {
+		if w.isFullScreen {
+			w.fullScreenTool.SetIcon(theme.ViewFullScreenIcon())
+		} else {
+			w.fullScreenTool.SetIcon(theme.ViewRestoreIcon())
+		}
+		w.isFullScreen = !w.isFullScreen
 		w.Window.SetFullScreen(w.isFullScreen)
-	}()
-
-	for _, item := range w.mainMenu.Items[0].Items {
-		if item.Label == config.FullScreen {
-			item.Label = config.ExitFullScreen
-			break
-		}
-		if item.Label == config.ExitFullScreen {
-			item.Label = config.FullScreen
-			break
-		}
+		w.toolbar.Refresh()
 	}
-	w.mainMenu.Items[0].Refresh()
-
-	w.perfStats.Hide()
-	w.isShowStats = false
-	w.isFullScreen = !w.isFullScreen
 }
 
 func (w *MainWindow) onDisplayChanged(s string) {
 	w.SetDisplayIndex(s)
 }
 
-func (w *MainWindow) togglePerformanceStats() {
-	if w.isShowStats {
-		w.perfStats.Hide()
-	} else {
-		w.perfStats.Show()
-	}
-	for _, item := range w.mainMenu.Items[0].Items {
-		if item.Label == config.ShowPerfStats {
-			item.Label = config.HiddenPerfStats
-			break
+func (w *MainWindow) togglePerformanceStats() func() {
+	return func() {
+		if w.isShowStats {
+			w.showStatsTool.SetIcon(theme.VisibilityIcon())
+			w.perfStats.Hide()
+		} else {
+			w.showStatsTool.SetIcon(theme.VisibilityOffIcon())
+			w.perfStats.Show()
 		}
-		if item.Label == config.HiddenPerfStats {
-			item.Label = config.ShowPerfStats
-			break
-		}
+		w.isShowStats = !w.isShowStats
+		w.toolbar.Refresh()
 	}
-	w.mainMenu.Items[0].Refresh()
-
-	w.isShowStats = !w.isShowStats
 }
 
 func (w *MainWindow) onQualityChanged(s string) {
@@ -127,19 +111,4 @@ func (w *MainWindow) onFPSChanged(s string) {
 		w.StopCapture()
 		w.StartCapture()
 	}
-}
-
-func (w *MainWindow) onSettingChanged() {
-	for _, item := range w.mainMenu.Items[3].Items {
-		if item.Label == config.RestoreDefault {
-			item.Label = config.RestoreNormal
-			w.mainMenu.Items[3].Label = "状态监控"
-			break
-		}
-		if item.Label == config.RestoreNormal {
-			item.Label = config.RestoreDefault
-			break
-		}
-	}
-	w.mainMenu.Items[3].Refresh()
 }

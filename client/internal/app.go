@@ -23,6 +23,15 @@ func NewAppAndRun() {
 
 	newApp.loginNewAndRun()
 
+	// 设置系统托盘菜单
+	//if desk, ok := newApp.FyneApp.(desktop.App); ok {
+	//	m := fyne.NewMenu("MyApp",
+	//		fyne.NewMenuItem("Show", func() {
+	//			llog.Debug("Show")
+	//		}))
+	//	desk.SetSystemTrayMenu(m)
+	//}
+
 	newApp.FyneApp.Run()
 }
 
@@ -71,6 +80,13 @@ func (a *App) mainNewAndRun(device *window.DeviceInfo) {
 	a.MainWindow = window.NewMainWindow(mainWindow)
 
 	a.MainWindow.OnConnectClick()
+
+	// 设置窗口关闭回调
+	a.MainWindow.Window.SetCloseIntercept(func() {
+		a.MainWindow.Cleanup()
+		a.MainWindow.Window.Close()
+		a.DeviceWindow.Window.Show()
+	})
 
 	// 显示主窗口
 	mainWindow.Show()

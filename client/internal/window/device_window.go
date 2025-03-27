@@ -10,6 +10,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
@@ -18,7 +19,7 @@ type DeviceWindow struct {
 	Window           fyne.Window
 	onDeviceSelected func(device *DeviceInfo) // 设备选择回调函数
 	username         string                   // 当前登录的用户名
-	deviceList       *widget.List             // 设备列表组件
+	deviceCard       *widget.Card             // 设备卡片列表
 	devices          []*DeviceInfo            // 设备信息列表
 }
 
@@ -47,70 +48,7 @@ func NewDeviceWindow(window fyne.Window, username string, onDeviceSelected func(
 }
 
 func (w *DeviceWindow) setupUI() {
-	// 创建设备列表
-	w.deviceList = widget.NewList(
-		func() int {
-			return len(w.devices)
-		},
-		func() fyne.CanvasObject {
-			info := container.NewCenter(
-				container.NewHBox(
-					widget.NewLabel(""),
-					widget.NewLabel(""),
-				),
-			)
-			return container.NewBorder(nil, nil,
-				widget.NewIcon(nil),
-				widget.NewIcon(nil),
-				info,
-			)
-		},
-		func(id widget.ListItemID, obj fyne.CanvasObject) {
-			border := obj.(*fyne.Container)
-			device := w.devices[id]
-
-			// 设备名称
-			labelList := border.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container)
-			nameLabel := labelList.Objects[0].(*widget.Label)
-			nameLabel.SetText(device.Name)
-
-			// 设备ip
-			ipLabel := labelList.Objects[1].(*widget.Label)
-			ipLabel.SetText(lkit.AnyToStr(device.IP))
-
-			// 设备图标
-			border.Objects[1].(*widget.Icon).SetResource(theme.ComputerIcon())
-
-			// 设备状态
-			var res fyne.Resource
-			if device.IsOnline {
-				res = theme.RadioButtonCheckedIcon()
-			} else {
-				res = theme.RadioButtonIcon()
-			}
-			border.Objects[2].(*widget.Icon).SetResource(res)
-		},
-	)
-
-	// 设置列表选择事件
-	w.deviceList.OnSelected = func(id widget.ListItemID) {
-		device := w.devices[id]
-		if device.IsOnline {
-			llog.Info("选择设备: %s", device.Name)
-			if w.onDeviceSelected != nil {
-				w.onDeviceSelected(device)
-			}
-		} else {
-			ShowError(w.Window, "该设备当前不在线, 无法连接")
-			w.deviceList.UnselectAll()
-		}
-	}
-
-	// 创建刷新按钮
-	refreshBtn := widget.NewButton("刷新设备列表", func() {
-		w.loadDevices()
-	})
-
+	// 个人信息
 	title := widget.NewLabel("设备管理 - " + w.username)
 	title.TextStyle = fyne.TextStyle{Bold: true}
 
@@ -119,18 +57,19 @@ func (w *DeviceWindow) setupUI() {
 		canvas.NewRadialGradient(color.Gray16{Y: 0xffff}, nil),
 	)
 
+	// 设备列表
+	refreshBtn := widget.NewButton("刷新设备列表", func() {
+		w.loadDevices()
+	})
+
 	refresh := container.NewVBox(
 		canvas.NewRadialGradient(color.Gray16{Y: 0xffff}, nil),
 		refreshBtn,
 	)
 
-	device := container.NewBorder(
-		nil,
-		refresh,
-		nil,
-		nil,
-		w.deviceList,
-	)
+	w.deviceCard = widget.NewCard("", "", nil)
+
+	device := container.NewBorder(nil, refresh, nil, nil, w.deviceCard)
 
 	tabs := container.NewAppTabs(
 		container.NewTabItemWithIcon("个人信息", theme.AccountIcon(), self),
@@ -167,7 +106,36 @@ func (w *DeviceWindow) loadDevices() {
 		{ID: "device3", Name: "家里的笔记本", IP: 333, IsOnline: true},
 	}
 
-	// 刷新列表显示
-	w.deviceList.UnselectAll()
-	w.deviceList.Refresh()
+	w.refreshDeviceList()
+}
+
+func (w *DeviceWindow) refreshDeviceList() {
+	// 创建设备列表
+	cardList := make([]fyne.CanvasObject, 0)
+	for _, device := range w.devices {
+		button := widget.NewButton("连接", w.buttonTapped(device))
+		if !device.IsOnline {
+			button.Disable()
+		}
+		con := container.NewHBox(layout.NewSpacer(), button)
+		card := widget.NewCard("", device.Name+": "+lkit.AnyToStr(device.IP), con)
+		cardList = append(cardList, card)
+	}
+
+	w.deviceCard.SetContent(container.NewScroll(container.NewVBox(cardList...)))
+	w.deviceCard.Refresh()
+}
+
+func (w *DeviceWindow) buttonTapped(device *DeviceInfo) func() {
+	if !device.IsOnline {
+		return func() {
+			ShowError(w.Window, "该设备当前不在线, 无法连接")
+		}
+	}
+	return func() {
+		llog.Info("选择设备: %s", device.Name)
+		if w.onDeviceSelected != nil {
+			w.onDeviceSelected(device)
+		}
+	}
 }

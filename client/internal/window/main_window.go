@@ -7,17 +7,19 @@ import (
 
 	"p2p_remote_desk/client/config"
 	"p2p_remote_desk/client/internal/capture"
-	"p2p_remote_desk/lkit"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/theme"
+	"fyne.io/fyne/v2/widget"
 )
 
 type MainWindow struct {
-	Window    fyne.Window
-	mainMenu  *fyne.MainMenu
-	statusBar string
+	Window         fyne.Window
+	toolbar        *widget.Toolbar
+	fullScreenTool *widget.ToolbarAction
+	showStatsTool  *widget.ToolbarAction
 
 	perfStats     *PerformanceStatsView
 	remoteScreen  *canvas.Raster
@@ -37,57 +39,23 @@ func NewMainWindow(window fyne.Window) *MainWindow {
 		Window: window,
 	}
 
-	// 设置菜单栏
-	w.setupMainMenu()
-
 	w.setupUI()
-
-	// 设置窗口关闭回调
-	window.SetCloseIntercept(func() {
-		w.Cleanup()
-		window.Close()
-	})
 
 	return w
 }
 
-func (w *MainWindow) setupMainMenu() {
-	// 视图菜单
-	viewMenu := fyne.NewMenu("视图",
-		fyne.NewMenuItem(config.FullScreen, w.onFullScreenClick),
-		fyne.NewMenuItem(config.ShowPerfStats, w.togglePerformanceStats),
-	)
-
-	screenConfig := config.GetConfig().ScreenConfig
-	qualityItems := make([]*fyne.MenuItem, 0)
-	for _, setting := range screenConfig.QualityList {
-		qualityName := setting.Name
-		qualityItems = append(qualityItems, fyne.NewMenuItem(qualityName, func() { w.onQualityChanged(qualityName) }))
-	}
-
-	fpsItems := make([]*fyne.MenuItem, 0)
-	for _, fps := range screenConfig.FrameRates {
-		fpsStr := lkit.AnyToStr(fps)
-		fpsItems = append(fpsItems, fyne.NewMenuItem(fpsStr, func() { w.onFPSChanged(fpsStr) }))
-	}
-
-	setting := fyne.NewMenu("状态监控",
-		fyne.NewMenuItem(config.RestoreDefault, w.onSettingChanged),
-	)
-
-	// 创建主菜单
-	w.mainMenu = fyne.NewMainMenu(
-		viewMenu,
-		fyne.NewMenu("画面质量", qualityItems...),
-		fyne.NewMenu("帧率", fpsItems...),
-		setting,
-	)
-
-	// 设置窗口内容
-	w.Window.SetMainMenu(w.mainMenu)
-}
-
 func (w *MainWindow) setupUI() {
+	// 创建工具栏
+	w.fullScreenTool = widget.NewToolbarAction(theme.ViewFullScreenIcon(), w.onFullScreenClick())
+	w.showStatsTool = widget.NewToolbarAction(theme.VisibilityIcon(), w.togglePerformanceStats())
+	w.toolbar = widget.NewToolbar(
+		w.fullScreenTool,
+		//widget.NewToolbarSeparator(),
+		w.showStatsTool,
+		widget.NewToolbarSpacer(),
+		widget.NewToolbarAction(theme.HelpIcon(), func() {}),
+	)
+
 	// 创建性能监控
 	w.perfStats = newPerformanceStatsView()
 	w.perfStats.Hide()
@@ -97,7 +65,7 @@ func (w *MainWindow) setupUI() {
 	w.screenCapture = capture.NewScreenCapture()
 
 	content := container.NewBorder(
-		nil,
+		w.toolbar,
 		nil,
 		nil,
 		w.perfStats.GetContainer(),
@@ -106,17 +74,10 @@ func (w *MainWindow) setupUI() {
 	w.Window.SetContent(content)
 	w.Window.Resize(config.WindowSize)
 	w.Window.CenterOnScreen()
-	w.Window.SetMaster()
+	// w.Window.SetMaster()
 }
 
 func (w *MainWindow) SetStatus(status string) {
-	switch w.mainMenu.Items[3].Items[0].Label {
-	case config.RestoreDefault:
-		return
-	default:
-		w.mainMenu.Items[3].Label = status
-	}
-	w.mainMenu.Items[3].Refresh()
 }
 
 func (w *MainWindow) updateScreen(weight, high int) image.Image {
@@ -185,14 +146,8 @@ func (w *MainWindow) StartCapture() {
 		return
 	}
 
-	// 从配置中获取默认帧率
-	fps := config.GetConfig().ScreenConfig.DefaultFrameRate
-	if fps <= 0 {
-		fps = 30
-	}
-
 	w.isCapturing = true
-	interval := time.Second / time.Duration(fps)
+	interval := time.Second / time.Duration(60)
 
 	ticker := time.NewTicker(interval)
 	lastCaptureTime := time.Now()
