@@ -1,8 +1,6 @@
 package window
 
 import (
-	"fmt"
-	"strconv"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -91,24 +89,5 @@ func (w *MainWindow) togglePerformanceStats() func() {
 		}
 		w.isShowStats = !w.isShowStats
 		w.toolbar.Refresh()
-	}
-}
-
-func (w *MainWindow) onQualityChanged(s string) {
-	w.SetQuality(s)
-}
-
-func (w *MainWindow) onFPSChanged(s string) {
-	_, err := strconv.Atoi(s)
-	if err != nil {
-		llog.Error("解析帧率失败: %v", err)
-		return
-	}
-
-	w.SetStatus(fmt.Sprintf("已设置帧率: %s", s))
-
-	if w.isConnected {
-		w.StopCapture()
-		w.StartCapture()
 	}
 }

@@ -3,10 +3,12 @@ package internal
 import (
 	"p2p_remote_desk/client/config"
 	"p2p_remote_desk/client/internal/window"
+	"p2p_remote_desk/llog"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/driver/desktop"
 )
 
 type App struct {
@@ -21,16 +23,24 @@ func NewAppAndRun() {
 		FyneApp: app.NewWithID("remote_desk"),
 	}
 
-	newApp.loginNewAndRun()
+	// 设置图标
+	icon, err := fyne.LoadResourceFromPath("../png/icon.png")
+	if err != nil {
+		llog.Fatal("加载图标失败: ", err)
+	}
+	// 设置应用图标
+	newApp.FyneApp.SetIcon(icon)
 
 	// 设置系统托盘菜单
-	//if desk, ok := newApp.FyneApp.(desktop.App); ok {
-	//	m := fyne.NewMenu("MyApp",
-	//		fyne.NewMenuItem("Show", func() {
-	//			llog.Debug("Show")
-	//		}))
-	//	desk.SetSystemTrayMenu(m)
-	//}
+	if desk, ok := newApp.FyneApp.(desktop.App); ok {
+		m := fyne.NewMenu("MyApp",
+			fyne.NewMenuItem("Show", func() {
+				llog.Debug("Show")
+			}))
+		desk.SetSystemTrayMenu(m)
+	}
+
+	newApp.loginNewAndRun()
 
 	newApp.FyneApp.Run()
 }
@@ -77,16 +87,13 @@ func (a *App) mainNewAndRun(device *window.DeviceInfo) {
 	mainWindow := a.FyneApp.NewWindow("远程桌面: " + device.Name)
 
 	// 创建主窗口管理器
-	a.MainWindow = window.NewMainWindow(mainWindow)
-
-	a.MainWindow.OnConnectClick()
-
-	// 设置窗口关闭回调
-	a.MainWindow.Window.SetCloseIntercept(func() {
+	a.MainWindow = window.NewMainWindow(mainWindow, func() {
 		a.MainWindow.Cleanup()
 		a.MainWindow.Window.Close()
 		a.DeviceWindow.Window.Show()
 	})
+
+	a.MainWindow.OnConnectClick()
 
 	// 显示主窗口
 	mainWindow.Show()

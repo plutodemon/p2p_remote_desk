@@ -13,10 +13,12 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+	"github.com/fyne-io/glfw-js"
 )
 
 type MainWindow struct {
 	Window         fyne.Window
+	onClose        func()
 	toolbar        *widget.Toolbar
 	fullScreenTool *widget.ToolbarAction
 	showStatsTool  *widget.ToolbarAction
@@ -34,12 +36,16 @@ type MainWindow struct {
 	isCapturing  bool
 }
 
-func NewMainWindow(window fyne.Window) *MainWindow {
+func NewMainWindow(window fyne.Window, onClose func()) *MainWindow {
 	w := &MainWindow{
-		Window: window,
+		Window:  window,
+		onClose: onClose,
 	}
 
 	w.setupUI()
+
+	// 设置窗口关闭回调
+	w.Window.SetCloseIntercept(onClose)
 
 	return w
 }
@@ -50,10 +56,10 @@ func (w *MainWindow) setupUI() {
 	w.showStatsTool = widget.NewToolbarAction(theme.VisibilityIcon(), w.togglePerformanceStats())
 	w.toolbar = widget.NewToolbar(
 		w.fullScreenTool,
-		//widget.NewToolbarSeparator(),
 		w.showStatsTool,
 		widget.NewToolbarSpacer(),
-		widget.NewToolbarAction(theme.HelpIcon(), func() {}),
+		widget.NewToolbarSeparator(),
+		widget.NewToolbarAction(theme.LogoutIcon(), w.onClose),
 	)
 
 	// 创建性能监控
@@ -63,13 +69,14 @@ func (w *MainWindow) setupUI() {
 	// 创建远程画面
 	w.remoteScreen = canvas.NewRaster(w.updateScreen)
 	w.screenCapture = capture.NewScreenCapture()
+	width, height := glfw.GetPrimaryMonitor().GetVideoMode().Width, glfw.GetPrimaryMonitor().GetVideoMode().Height
 
 	content := container.NewBorder(
 		w.toolbar,
 		nil,
 		nil,
 		w.perfStats.GetContainer(),
-		w.remoteScreen,
+		container.New(&AspectRatioLayout{Ratio: float64(width) / float64(height)}, w.remoteScreen),
 	)
 	w.Window.SetContent(content)
 	w.Window.Resize(config.WindowSize)
@@ -105,17 +112,6 @@ func (w *MainWindow) SetFPS(fps float64) {
 	//w.SetStatus(fmt.Sprintf("%.1f", fps))
 }
 
-// SetQuality 设置画面质量
-func (w *MainWindow) SetQuality(quality string) {
-	if w.screenCapture == nil {
-		return
-	}
-
-	// 设置屏幕捕获的质量
-	w.screenCapture.Quality = quality
-	w.SetStatus(fmt.Sprintf("已设置画面质量: %s", quality))
-}
-
 // SetDisplayIndex 设置显示器索引
 func (w *MainWindow) SetDisplayIndex(displayName string) {
 	// 设置屏幕捕获的显示器索引
@@ -147,7 +143,7 @@ func (w *MainWindow) StartCapture() {
 	}
 
 	w.isCapturing = true
-	interval := time.Second / time.Duration(60)
+	interval := time.Second / time.Duration(glfw.GetPrimaryMonitor().GetVideoMode().RefreshRate)
 
 	ticker := time.NewTicker(interval)
 	lastCaptureTime := time.Now()
