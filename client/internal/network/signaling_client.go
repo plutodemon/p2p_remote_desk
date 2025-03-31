@@ -59,6 +59,9 @@ func ConnectSignalingServer() error {
 		_ = wsConn.CloseNow()
 	}()
 
+	// ExampleConn_Ping
+	// wsConn.Ping()
+
 	afterErr := make(chan error)
 	go func() {
 		readMessage(afterErr)

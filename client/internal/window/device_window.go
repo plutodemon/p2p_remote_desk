@@ -18,6 +18,8 @@ import (
 type DeviceWindow struct {
 	Window           fyne.Window
 	onDeviceSelected func(device *DeviceInfo) // 设备选择回调函数
+	onLogout         func()                   // 注销回调函数
+	onClose          func()                   // 关闭回调函数
 	username         string                   // 当前登录的用户名
 	deviceCard       *widget.Card             // 设备卡片列表
 	devices          []*DeviceInfo            // 设备信息列表
@@ -30,11 +32,13 @@ type DeviceInfo struct {
 	IsOnline bool   // 是否在线
 }
 
-func NewDeviceWindow(window fyne.Window, username string, onDeviceSelected func(device *DeviceInfo)) *DeviceWindow {
+func NewDeviceWindow(window fyne.Window, username string, onDeviceSelected func(device *DeviceInfo), onLogout, onClose func()) *DeviceWindow {
 	w := &DeviceWindow{
 		Window:           window,
-		username:         username,
 		onDeviceSelected: onDeviceSelected,
+		onLogout:         onLogout,
+		onClose:          onClose,
+		username:         username,
 		devices:          make([]*DeviceInfo, 0),
 	}
 
@@ -43,6 +47,8 @@ func NewDeviceWindow(window fyne.Window, username string, onDeviceSelected func(
 
 	// 加载设备列表
 	w.loadDevices()
+
+	w.Window.SetOnClosed(w.onClose)
 
 	return w
 }
@@ -71,10 +77,22 @@ func (w *DeviceWindow) setupUI() {
 
 	device := container.NewBorder(nil, refresh, nil, nil, w.deviceCard)
 
+	// 设置页面
+	logoutBtn := widget.NewButton("退出登录", func() {
+		w.onLogout()
+	})
+
+	logout := container.NewVBox(
+		canvas.NewRadialGradient(color.Gray16{Y: 0xffff}, nil),
+		logoutBtn,
+	)
+
+	logoutCon := container.NewBorder(nil, logout, nil, nil, widget.NewLabel("设置页面"))
+
 	tabs := container.NewAppTabs(
 		container.NewTabItemWithIcon("个人信息", theme.AccountIcon(), self),
 		container.NewTabItemWithIcon("设备列表", theme.ListIcon(), device),
-		container.NewTabItemWithIcon("设置", theme.SettingsIcon(), widget.NewLabel("设置页面")),
+		container.NewTabItemWithIcon("设置", theme.SettingsIcon(), logoutCon),
 	)
 	tabs.SetTabLocation(container.TabLocationLeading)
 
@@ -82,7 +100,7 @@ func (w *DeviceWindow) setupUI() {
 	w.Window.SetContent(tabs)
 	w.Window.Resize(config.WindowSize)
 	w.Window.CenterOnScreen()
-	w.Window.SetMaster()
+	// w.Window.SetMaster()
 }
 
 func (w *DeviceWindow) loadDevices() {

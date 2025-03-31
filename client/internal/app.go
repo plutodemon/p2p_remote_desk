@@ -63,6 +63,10 @@ func (a *App) deviceNewAndRun(username string) {
 	// 创建设备管理窗口管理器
 	a.DeviceWindow = window.NewDeviceWindow(deviceWindow, username, func(device *window.DeviceInfo) {
 		a.confirmDialog(device)
+	}, func() {
+		a.DeviceWindow.Window.Close()
+		a.LoginWindow.Window.Show()
+	}, func() {
 	})
 
 	// 显示设备管理窗口
