@@ -10,6 +10,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
@@ -19,7 +20,6 @@ type DeviceWindow struct {
 	Window           fyne.Window
 	onDeviceSelected func(device *DeviceInfo) // 设备选择回调函数
 	onLogout         func()                   // 注销回调函数
-	onClose          func()                   // 关闭回调函数
 	username         string                   // 当前登录的用户名
 	deviceCard       *widget.Card             // 设备卡片列表
 	devices          []*DeviceInfo            // 设备信息列表
@@ -32,25 +32,49 @@ type DeviceInfo struct {
 	IsOnline bool   // 是否在线
 }
 
-func NewDeviceWindow(window fyne.Window, username string, onDeviceSelected func(device *DeviceInfo), onLogout, onClose func()) *DeviceWindow {
-	w := &DeviceWindow{
-		Window:           window,
-		onDeviceSelected: onDeviceSelected,
-		onLogout:         onLogout,
-		onClose:          onClose,
-		username:         username,
-		devices:          make([]*DeviceInfo, 0),
+func (newApp *App) newDeviceWindow(username string) {
+	newApp.deviceWindow = &DeviceWindow{
+		username: username,
+		devices:  make([]*DeviceInfo, 0),
+	}
+
+	newApp.deviceWindow.Window = newApp.fyneApp.NewWindow("设备管理")
+
+	newApp.deviceWindow.onDeviceSelected = func(device *DeviceInfo) {
+		newApp.confirmDialog(device)
+	}
+
+	newApp.deviceWindow.onLogout = func() {
+		newApp.deviceWindow.Window.Hide()
+		newApp.loginWindow.Window.Show()
 	}
 
 	// 创建设备管理界面
-	w.setupUI()
+	newApp.deviceWindow.setupUI()
 
 	// 加载设备列表
-	w.loadDevices()
+	newApp.deviceWindow.loadDevices()
 
-	w.Window.SetOnClosed(w.onClose)
+	newApp.deviceWindow.Window.SetOnClosed(func() {
+	})
 
-	return w
+	newApp.deviceWindow.Window.Show()
+}
+
+func (newApp *App) confirmDialog(device *DeviceInfo) {
+	callback := func(conn bool) {
+		if !conn {
+			return
+		}
+		newApp.deviceWindow.Window.Hide()
+		newApp.newMainWindow(device)
+	}
+
+	confirm := dialog.NewConfirm("连接确认", "是否连接到设备: "+device.Name, callback, newApp.deviceWindow.Window)
+	confirm.SetConfirmText("连接")
+	confirm.SetDismissText("取消")
+	confirm.Resize(config.DialogSize)
+	confirm.Show()
 }
 
 func (w *DeviceWindow) setupUI() {
@@ -100,7 +124,7 @@ func (w *DeviceWindow) setupUI() {
 	w.Window.SetContent(tabs)
 	w.Window.Resize(config.WindowSize)
 	w.Window.CenterOnScreen()
-	// w.Window.SetMaster()
+	w.Window.SetMaster()
 }
 
 func (w *DeviceWindow) loadDevices() {

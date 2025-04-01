@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"p2p_remote_desk/client/config"
-	"p2p_remote_desk/client/internal"
+	"p2p_remote_desk/client/internal/window"
 	"p2p_remote_desk/llog"
 
 	"github.com/go-gl/glfw/v3.3/glfw"
@@ -33,5 +33,5 @@ func main() {
 	}
 	defer glfw.Terminate()
 
-	internal.NewAppAndRun()
+	window.NewAppAndRun()
 }

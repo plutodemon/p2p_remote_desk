@@ -15,15 +15,18 @@ type LoginWindow struct {
 	onLoggedIn func(userName string)
 }
 
-func NewLoginWindow(window fyne.Window, onLoggedIn func(userName string)) *LoginWindow {
-	w := &LoginWindow{
-		Window:     window,
-		onLoggedIn: onLoggedIn,
+func (newApp *App) newLoginWindow() {
+	newApp.loginWindow = &LoginWindow{}
+
+	newApp.loginWindow.Window = newApp.fyneApp.NewWindow("登录")
+
+	newApp.loginWindow.onLoggedIn = func(userName string) {
+		newApp.loginWindow.Window.Hide()
+		newApp.newDeviceWindow(userName)
 	}
 
-	w.setupUI()
-
-	return w
+	newApp.loginWindow.setupUI()
+	newApp.loginWindow.Window.Show()
 }
 
 func (w *LoginWindow) setupUI() {

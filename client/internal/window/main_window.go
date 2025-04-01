@@ -36,18 +36,24 @@ type MainWindow struct {
 	isCapturing  bool
 }
 
-func NewMainWindow(window fyne.Window, onClose func()) *MainWindow {
-	w := &MainWindow{
-		Window:  window,
-		onClose: onClose,
+func (newApp *App) newMainWindow(device *DeviceInfo) {
+	newApp.mainWindow = &MainWindow{}
+
+	newApp.mainWindow.Window = newApp.fyneApp.NewWindow("远程桌面: " + device.Name)
+
+	newApp.mainWindow.onClose = func() {
+		newApp.mainWindow.Cleanup()
+		newApp.mainWindow.Window.Close()
+		newApp.deviceWindow.Window.Show()
 	}
 
-	w.setupUI()
+	newApp.mainWindow.setupUI()
 
-	// 设置窗口关闭回调
-	w.Window.SetCloseIntercept(onClose)
+	newApp.mainWindow.Window.SetCloseIntercept(newApp.mainWindow.onClose)
 
-	return w
+	newApp.mainWindow.OnConnectClick()
+
+	newApp.mainWindow.Window.Show()
 }
 
 func (w *MainWindow) setupUI() {
