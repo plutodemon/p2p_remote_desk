@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"os/signal"
 	"syscall"
 
@@ -14,16 +13,17 @@ import (
 )
 
 func main() {
+	lkit.InitCrashLog()
+	defer lkit.CrashLog()
+
 	// 初始化配置
 	if err := config.Init(); err != nil {
-		fmt.Printf("初始化配置失败: %v\n", err)
-		os.Exit(1)
+		panic(fmt.Sprintf("初始化配置失败: %v", err))
 	}
 
 	// 初始化日志系统
 	if err := llog.Init(config.GetConfig().LogConfig); err != nil {
-		fmt.Printf("初始化日志系统失败: %v\n", err)
-		os.Exit(1)
+		panic(fmt.Sprintf("初始化日志系统失败: %v", err))
 	}
 	defer llog.Cleanup()
 

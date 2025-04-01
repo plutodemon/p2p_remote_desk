@@ -5,10 +5,13 @@ go 1.23.7
 require (
 	fyne.io/fyne/v2 v2.5.4
 	github.com/coder/websocket v1.8.12
+	github.com/denisbrodbeck/machineid v1.0.1
+	github.com/fyne-io/glfw-js v0.0.0-20241126112943-313d8a0fe1d0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20240506104042-037f3cc74f2a
 	github.com/kbinani/screenshot v0.0.0-20240820160931-a8a2c5d0e191
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
+	github.com/nightlyone/lockfile v1.0.0
 	github.com/panjf2000/ants/v2 v2.11.2
 	github.com/pelletier/go-toml/v2 v2.2.3
 	github.com/shirou/gopsutil v3.21.11+incompatible
@@ -27,11 +30,9 @@ require (
 	github.com/cloudwego/base64x v0.1.4 // indirect
 	github.com/cloudwego/iasm v0.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/denisbrodbeck/machineid v1.0.1 // indirect
 	github.com/fredbi/uri v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/fyne-io/gl-js v0.0.0-20220119005834-d2da28d9ccfe // indirect
-	github.com/fyne-io/glfw-js v0.0.0-20241126112943-313d8a0fe1d0 // indirect
 	github.com/fyne-io/image v0.0.0-20220602074514-4956b0afb3d2 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
 	github.com/gen2brain/shm v0.1.0 // indirect
