@@ -39,7 +39,7 @@ func LoginAuth(userName, passWord string) int32 {
 
 	authCode := rsp.GetCode()
 	if authCode != common.AuthCode_OK {
-		llog.Error("login failed: ", authCode)
+		llog.Info("login failed: ", authCode)
 	}
 
 	return int32(authCode)

@@ -16,6 +16,11 @@ import (
 	"github.com/denisbrodbeck/machineid"
 )
 
+type SendMessStr struct {
+	MsgType common.SignalMessageType
+	Msg     interface{}
+}
+
 var (
 	ClientUID  string          // 设备唯一标识
 	ClientName string          // 设备名称(可修改备注)
@@ -23,6 +28,8 @@ var (
 	ctx        context.Context // 上下文
 	wsConn     *websocket.Conn // websocket连接
 	Clients    = sync.Map{}    // 客户端列表
+
+	SendMessage = make(chan SendMessStr) // 发送消息通道
 )
 
 func initClient() error {
@@ -67,7 +74,7 @@ func ConnectSignalingServer() error {
 		readMessage(afterErr)
 	}()
 	go func() {
-		afterConnectSignalingServer(afterErr)
+		sendMessage(afterErr)
 	}()
 
 	select {
@@ -107,23 +114,18 @@ func readMessage(afterErr chan error) {
 	}
 }
 
-func afterConnectSignalingServer(afterErr chan error) {
-	if err := sendMessage(common.SignalMessageTypeRegister, nil); err != nil {
-		llog.Warn("注册失败:", err)
-		afterErr <- err
-		return
-	}
-	llog.InfoF("客户端 %s 注册成功", ClientName)
-
-	// 获取列表
-	if err := sendMessage(common.SignalMessageTypeGetClientList, nil); err != nil {
-		llog.Warn("获取列表失败:", err)
-		afterErr <- err
-		return
+func sendMessage(afterErr chan error) {
+	select {
+	case message := <-SendMessage:
+		if err := send(message.MsgType, message.Msg); err != nil {
+			llog.Warn("获取列表失败:", err)
+			afterErr <- err
+			return
+		}
 	}
 }
 
-func sendMessage(messageType common.SignalMessageType, message interface{}) error {
+func send(messageType common.SignalMessageType, message interface{}) error {
 	if ctx == nil || wsConn == nil {
 		return errors.New("ctx or wsConn is nil")
 	}

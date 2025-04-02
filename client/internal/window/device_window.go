@@ -4,6 +4,8 @@ import (
 	"image/color"
 
 	"p2p_remote_desk/client/config"
+	"p2p_remote_desk/client/internal/network"
+	"p2p_remote_desk/common"
 	"p2p_remote_desk/lkit"
 	"p2p_remote_desk/llog"
 
@@ -131,21 +133,23 @@ func (w *DeviceWindow) loadDevices() {
 	// 先清空设备列表
 	w.devices = make([]*DeviceInfo, 0)
 
-	//network.Clients.Range(func(key, value any) bool {
-	//	client := value.(common.ClientInfo)
-	//	w.devices = append(w.devices, &DeviceInfo{
-	//		ID:       client.UID,
-	//		Name:     "设备" + client.Name,
-	//		IP:       client.IP,
-	//		IsOnline: true,
-	//	})
-	//	return true
-	//})
+	network.Clients.Range(func(key, value any) bool {
+		client := value.(common.ClientInfo)
+		w.devices = append(w.devices, &DeviceInfo{
+			ID:       client.UID,
+			Name:     "设备" + client.Name,
+			IP:       client.IP,
+			IsOnline: true,
+		})
+		return true
+	})
 
-	w.devices = []*DeviceInfo{
-		{ID: "device1", Name: "我的电脑", IP: 111, IsOnline: true},
-		{ID: "device2", Name: "办公室电脑", IP: 222, IsOnline: false},
-		{ID: "device3", Name: "家里的笔记本", IP: 333, IsOnline: true},
+	if config.IsDevelopment() && len(w.devices) == 0 {
+		w.devices = []*DeviceInfo{
+			{ID: "device1", Name: "我的电脑", IP: 111, IsOnline: true},
+			{ID: "device2", Name: "办公室电脑", IP: 222, IsOnline: false},
+			{ID: "device3", Name: "家里的笔记本", IP: 333, IsOnline: true},
+		}
 	}
 
 	w.refreshDeviceList()

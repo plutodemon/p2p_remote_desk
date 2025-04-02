@@ -97,13 +97,7 @@ func (w *LoginWindow) handleLogin(username, password string) {
 	}
 	llog.Info("用户登录成功: %s", username)
 
-	go func() {
-		// 连接信令服务器
-		if err := network.ConnectSignalingServer(); err != nil {
-			llog.Warn("连接信令服务器失败:", err)
-			return
-		}
-	}()
+	network.StartNetWorkClient()
 
 	// 隐藏加载动画
 	loadingPopup.Hide()
