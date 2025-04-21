@@ -27,8 +27,8 @@ var (
 	UserToken  string          // 设备token
 	ctx        context.Context // 上下文
 	wsConn     *websocket.Conn // websocket连接
-	Clients    = sync.Map{}    // 客户端列表
 
+	Clients     = sync.Map{}             // 客户端列表
 	SendMessage = make(chan SendMessStr) // 发送消息通道
 )
 
@@ -48,8 +48,7 @@ func ConnectSignalingServer() error {
 	var err error
 
 	if err = initClient(); err != nil {
-		llog.Warn("初始化客户端失败", "error:", err)
-		return err
+		return errors.New("初始化客户端失败:" + err.Error())
 	}
 
 	ctx = context.Background()
@@ -59,8 +58,7 @@ func ConnectSignalingServer() error {
 
 	wsConn, _, err = websocket.Dial(ctx, url, nil)
 	if err != nil {
-		llog.Warn("连接信令服务器失败", "url:", url, "error:", err)
-		return err
+		return errors.New("连接信令服务器失败:" + url + err.Error())
 	}
 	defer func() {
 		_ = wsConn.CloseNow()
@@ -76,6 +74,8 @@ func ConnectSignalingServer() error {
 	go func() {
 		sendMessage(afterErr)
 	}()
+
+	Connected <- true
 
 	select {
 	case e := <-afterErr:
@@ -115,12 +115,14 @@ func readMessage(afterErr chan error) {
 }
 
 func sendMessage(afterErr chan error) {
-	select {
-	case message := <-SendMessage:
-		if err := send(message.MsgType, message.Msg); err != nil {
-			llog.Warn("获取列表失败:", err)
-			afterErr <- err
-			return
+	for {
+		select {
+		case message := <-SendMessage:
+			if err := send(message.MsgType, message.Msg); err != nil {
+				llog.Warn("发送消息失败:", err)
+				afterErr <- err
+				return
+			}
 		}
 	}
 }

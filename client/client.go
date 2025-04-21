@@ -7,8 +7,6 @@ import (
 	"p2p_remote_desk/client/internal/window"
 	"p2p_remote_desk/lkit"
 	"p2p_remote_desk/llog"
-
-	"github.com/go-gl/glfw/v3.3/glfw"
 )
 
 func main() {
@@ -34,11 +32,6 @@ func main() {
 
 	// 设置全局panic处理
 	defer llog.HandlePanic()
-
-	if err := glfw.Init(); err != nil {
-		llog.Fatal("初始化glfw失败: ", err)
-	}
-	defer glfw.Terminate()
 
 	window.NewAppAndRun()
 }

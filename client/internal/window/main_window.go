@@ -75,7 +75,9 @@ func (w *MainWindow) setupUI() {
 	// 创建远程画面
 	w.remoteScreen = canvas.NewRaster(w.updateScreen)
 	w.screenCapture = capture.NewScreenCapture()
-	width, height := glfw.GetPrimaryMonitor().GetVideoMode().Width, glfw.GetPrimaryMonitor().GetVideoMode().Height
+
+	videoMode := glfw.GetPrimaryMonitor().GetVideoMode()
+	width, height := videoMode.Width, videoMode.Height
 
 	content := container.NewBorder(
 		w.toolbar,
