@@ -119,8 +119,13 @@ func initLogger(logConfig *LogSetting) error {
 	// 创建sugar logger
 	sugar = log.Sugar()
 
+	_, err := zap.RedirectStdLogAt(log, zapcore.ErrorLevel)
+	if err != nil {
+		return fmt.Errorf("重定向标准日志失败: %v", zap.Error(err))
+	}
+
 	// 输出初始化信息
-	sugar.Infof("日志系统初始化完成，日志级别: %s", strings.ToUpper(logConfig.Level))
+	sugar.Info("日志系统初始化完成，日志级别:", strings.ToUpper(logConfig.Level))
 
 	return nil
 }

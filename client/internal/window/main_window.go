@@ -7,6 +7,7 @@ import (
 
 	"p2p_remote_desk/client/config"
 	"p2p_remote_desk/client/internal/capture"
+	"p2p_remote_desk/lkit"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -156,7 +157,7 @@ func (w *MainWindow) StartCapture() {
 	ticker := time.NewTicker(interval)
 	lastCaptureTime := time.Now()
 
-	go func() {
+	lkit.SafeGo(func() {
 		defer ticker.Stop()
 
 		for range ticker.C {
@@ -181,5 +182,5 @@ func (w *MainWindow) StartCapture() {
 				w.remoteScreen.Refresh()
 			}
 		}
-	}()
+	})
 }

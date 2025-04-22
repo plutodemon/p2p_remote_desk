@@ -3,11 +3,11 @@ package window
 import (
 	"time"
 
+	"p2p_remote_desk/lkit"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
-
-	"p2p_remote_desk/llog"
 )
 
 func ShowError(window fyne.Window, message string) {
@@ -16,10 +16,10 @@ func ShowError(window fyne.Window, message string) {
 	popup.Show()
 
 	// 2秒后自动关闭错误提示
-	go func() {
+	lkit.SafeGo(func() {
 		time.Sleep(2 * time.Second)
 		popup.Hide()
-	}()
+	})
 }
 
 func (w *MainWindow) OnConnectClick() {
@@ -40,14 +40,7 @@ func (w *MainWindow) handleControllerConnect() {
 
 	w.SetStatus("正在连接...")
 
-	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				llog.Error("连接过程发生panic: %v", r)
-				w.SetStatus("连接异常")
-			}
-		}()
-
+	lkit.SafeGoWithCallback(func() {
 		// todo 连接逻辑
 		//if err := w.mainUI.screenCapture.Connect(serverAddr); err != nil {
 		//	llog.Error("连接失败: %v", err)
@@ -58,7 +51,9 @@ func (w *MainWindow) handleControllerConnect() {
 		w.SetStatus("已连接")
 		w.isConnected = true
 		w.StartCapture()
-	}()
+	}, func(err interface{}) {
+		w.SetStatus("连接异常")
+	})
 }
 
 func (w *MainWindow) onFullScreenClick() func() {

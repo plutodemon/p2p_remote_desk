@@ -68,12 +68,12 @@ func ConnectSignalingServer() error {
 	// wsConn.Ping()
 
 	afterErr := make(chan error)
-	go func() {
+	lkit.SafeGo(func() {
 		readMessage(afterErr)
-	}()
-	go func() {
+	})
+	lkit.SafeGo(func() {
 		sendMessage(afterErr)
-	}()
+	})
 
 	Connected <- true
 

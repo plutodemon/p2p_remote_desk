@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"p2p_remote_desk/client/internal/monitor"
+	"p2p_remote_desk/lkit"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -72,7 +73,7 @@ func (pv *PerformanceStatsView) initComponents() {
 
 // startUpdateTimer 启动更新定时器
 func (pv *PerformanceStatsView) startUpdateTimer() {
-	go func() {
+	lkit.SafeGo(func() {
 		ticker := time.NewTicker(time.Second)
 		defer ticker.Stop()
 
@@ -82,7 +83,7 @@ func (pv *PerformanceStatsView) startUpdateTimer() {
 			}
 			pv.updateStats()
 		}
-	}()
+	})
 }
 
 // updateStats 更新性能指标
