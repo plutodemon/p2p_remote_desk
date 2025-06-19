@@ -37,19 +37,19 @@ func main() {
 	// 每个服务都用一个goroutine来运行
 
 	// 验证服务
-	go func() {
+	lkit.SafeGo(func() {
 		auth.Start()
-	}()
+	})
 
 	// 信令服务
-	go func() {
+	lkit.SafeGo(func() {
 		signaling.Start()
-	}()
+	})
 
 	// ice服务
-	go func() {
+	lkit.SafeGo(func() {
 		// todo
-	}()
+	})
 
 	// 主goroutine等待信号 一直阻塞
 	select {

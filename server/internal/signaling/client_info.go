@@ -116,11 +116,11 @@ func (c *ClientsInfo) ClientRange(f func(client *Client) bool) {
 func startCleanupRoutine() {
 	cfg := config.GetConfig().Server
 	ticker := time.NewTicker(time.Duration(cfg.CleanupInterval) * time.Second)
-	go func() {
+	lkit.SafeGo(func() {
 		for range ticker.C {
 			cleanupInactiveConnections()
 		}
-	}()
+	})
 }
 
 func cleanupInactiveConnections() {

@@ -69,7 +69,7 @@ var (
 
 func init() {
 	// 设置项目内部配置路径
-	configPath = filepath.Join("config", "config.toml")
+	configPath = filepath.Join("config", "client_cfg.toml")
 }
 
 // Init 初始化配置

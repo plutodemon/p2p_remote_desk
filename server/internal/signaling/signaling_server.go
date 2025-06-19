@@ -130,9 +130,9 @@ func handleWebSocketConn(conn *websocket.Conn) {
 	registerChan := make(chan bool)
 
 	// 启动一个goroutine处理注册
-	go func() {
+	lkit.SafeGo(func() {
 		dealRegisterMessage(ctx, conn, registerChan, &clientUID)
-	}()
+	})
 
 	// 等待注册完成或超时
 	select {
@@ -156,9 +156,9 @@ func handleWebSocketConn(conn *websocket.Conn) {
 	msgChan := make(chan []byte, cfg.MessageBufferSize)
 
 	// 启动消息处理协程
-	go func() {
+	lkit.SafeGo(func() {
 		dealMessage(ctx, msgChan)
-	}()
+	})
 
 	// 主循环读取消息并发送到处理通道
 	for {
